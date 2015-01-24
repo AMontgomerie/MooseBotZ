@@ -1,0 +1,25 @@
+﻿Build started 24/01/2015 11:40:54.
+     1>Project "C:\Users\IarfMoose\Documents\GitHub\MooseBotZ\MooseBot\MooseBot\MooseBot.vcxproj" on node 2 (Rebuild target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /IC:\Users\IarfMoose\Downloads\BWAPI_3.7.4/include /IC:\Users\IarfMoose\Downloads\boost_1_55_0 /Zi /nologo /W3 /WX- /Ox /Ob2 /Oi /Ot /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D MOOSEBOT_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt ArmyManager.cpp BuildingPlacer.cpp BuildOrderQueue.cpp Common.cpp MooseBot.cpp ProductionManager.cpp ScoutManager.cpp StarcraftBuildOrderSearchManager.cpp StrategyManager.cpp WorkerManager.cpp
+         ArmyManager.cpp
+         BuildingPlacer.cpp
+         BuildOrderQueue.cpp
+     1>c:\users\iarfmoose\documents\github\moosebotz\moosebot\moosebot\Common.h(26): fatal error C1083: Cannot open include file: 'boost/foreach.hpp': No such file or directory
+         Common.cpp
+     1>c:\users\iarfmoose\documents\github\moosebotz\moosebot\moosebot\Common.h(26): fatal error C1083: Cannot open include file: 'boost/foreach.hpp': No such file or directory
+         MooseBot.cpp
+     1>c:\users\iarfmoose\documents\github\moosebotz\moosebot\moosebot\Common.h(26): fatal error C1083: Cannot open include file: 'boost/foreach.hpp': No such file or directory
+         ProductionManager.cpp
+     1>c:\users\iarfmoose\documents\github\moosebotz\moosebot\moosebot\Common.h(26): fatal error C1083: Cannot open include file: 'boost/foreach.hpp': No such file or directory
+         ScoutManager.cpp
+         StarcraftBuildOrderSearchManager.cpp
+     1>c:\users\iarfmoose\documents\github\moosebotz\moosebot\moosebot\Common.h(26): fatal error C1083: Cannot open include file: 'boost/foreach.hpp': No such file or directory
+         StrategyManager.cpp
+     1>c:\users\iarfmoose\documents\github\moosebotz\moosebot\moosebot\Common.h(26): fatal error C1083: Cannot open include file: 'boost/foreach.hpp': No such file or directory
+         WorkerManager.cpp
+     1>Done Building Project "C:\Users\IarfMoose\Documents\GitHub\MooseBotZ\MooseBot\MooseBot\MooseBot.vcxproj" (Rebuild target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:05.88
