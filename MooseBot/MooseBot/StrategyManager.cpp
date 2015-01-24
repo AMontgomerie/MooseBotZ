@@ -35,9 +35,9 @@ void StrategyManager::addStrategies()
 	protossOpeningBook[ProtossDragoons]		= "0 0 0 0 1 0 0 3 0 7 0 0 5 0 0 3 8 6 1 6 6 0 3 1 0 6 6 6";
 	terranOpeningBook[TerranMM]		= "0 0 0 0 0 1 0 0 3 0 0 3 0 1 0 4 0 0 0 6";
 	terranOpeningBook[TerranMech]	= "0 0 0 0 0 1 0 0 3 4 0 0 0 0 0 9 1 0 0 9 13 5 0 5 0 13 5 15";
-	zergOpeningBook[ZergZerglingRush]		= "0 0 0 0 0 1 0 0 0 2 3 5 0 0 0 0 0 0 1";
-	zergOpeningBook[ZergHydras]				= "0 0 0 0 0 1 0 0 0 3 5 0 0 0 7";
-	zergOpeningBook[ZergMutas]				= "0 0 0 0 0 3 5 0 0 1 6 0 0 0 0 8";
+	//zergOpeningBook[ZergZerglingRush]		= "0 3 4 4 4 4 4 4 1 4 4 4 4";
+	zergOpeningBook[ZergHydras]				= "0 0 0 0 0 1 0 0 0 3 0 2 0 0 4 4 4 5";
+	//zergOpeningBook[ZergMutas]				= "0 0 0 0 0 3 5 0 0 1 6 0 0 0 0 8";
 
 	if (selfRace == BWAPI::Races::Protoss)
 	{
@@ -51,9 +51,9 @@ void StrategyManager::addStrategies()
 	}
 	else if (selfRace == BWAPI::Races::Zerg)
 	{
-		usableStrategies.push_back(ZergZerglingRush);
+	//	usableStrategies.push_back(ZergZerglingRush);
 		usableStrategies.push_back(ZergHydras);
-		usableStrategies.push_back(ZergMutas);
+		//usableStrategies.push_back(ZergMutas);
 	}
 }
 
@@ -497,13 +497,43 @@ const MetaPairVector StrategyManager::getZergBuildOrderGoal() const
 	
 	int numMutas  =				BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Zerg_Mutalisk);
 	int numHydras  =			BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Zerg_Hydralisk);
+	int numDrones  =			BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Zerg_Drone);
+	int numZerglings =			BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Zerg_Zergling);
+	int numUltras =				BWAPI::Broodwar->self()->allUnitCount(BWAPI::UnitTypes::Zerg_Ultralisk);
+
+//	int hatcheryCount = 0;
+	//int dronesWanted = numDrones;
+
+	/*
+	for(std::set<BWAPI::Unit*>::const_iterator i=BWAPI::Broodwar->self()->getUnits().begin();i!=BWAPI::Broodwar->self()->getUnits().end();i++)
+	{
+		if((*i)->getType().isResourceDepot())
+		{
+			hatcheryCount++;
+		}
+	}
+
+	if((numDrones < (hatcheryCount * 20)) && (numDrones < WORKERMAX))
+	{
+		dronesWanted += hatcheryCount * 4;
+		if(dronesWanted > WORKERMAX)
+		{
+			dronesWanted = WORKERMAX;
+		}
+	}
+	*/
 
 	int mutasWanted = numMutas + 6;
 	int hydrasWanted = numHydras + 6;
+	int zerglingsWanted = numZerglings + 12;
+	int ultrasWanted = numUltras + 2;
+	int dronesWanted = numDrones + 6;
 
-	goal.push_back(std::pair<MetaType, int>(BWAPI::UnitTypes::Zerg_Hydralisk, hydrasWanted));
+	//goal.push_back(std::pair<MetaType, int>(BWAPI::UnitTypes::Zerg_Hydralisk, hydrasWanted));
+	//goal.push_back(std::pair<MetaType, int>(BWAPI::UnitTypes::Zerg_Zergling, zerglingsWanted));
+	goal.push_back(std::pair<MetaType, int>(BWAPI::UnitTypes::Zerg_Drone, dronesWanted));
 	//goal.push_back(std::pair<MetaType, int>(BWAPI::UnitTypes::Zerg_Mutalisk, mutasWanted));
-	//goal.push_back(std::pair<MetaType, int>(BWAPI::UnitTypes::Zerg_Zergling, 6));
+	//goal.push_back(std::pair<MetaType, int>(BWAPI::UnitTypes::Zerg_Ultralisk, ultrasWanted));
 
 	return (const std::vector< std::pair<MetaType, UnitCountType> >)goal;
 }

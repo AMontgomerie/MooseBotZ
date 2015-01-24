@@ -11,7 +11,7 @@ Distributed under GPL v3, see LICENSE for details.
 #include "WorkerManager.h"
 #include "StarcraftBuildOrderSearchManager.h"
 
-#define MAXWAIT 720
+#define MAXWAIT 720*2
 
 class ProductionManager
 {
@@ -25,6 +25,7 @@ class ProductionManager
 	bool								expanding;
 	bool								deadlockfound;
 	bool								expansionQueued;
+	bool								expandingIsAdvisable;
 	BWAPI::TilePosition					centre;
 	int									lastProductionFrame;
 	int									lastExpansionFrame;
@@ -52,6 +53,7 @@ public:
 	void ProductionManager::produceDetection();
 	void ProductionManager::setCentre(BWAPI::TilePosition centre);
 	void ProductionManager::clearProductionQueue();
+	void ProductionManager::setExpansionStatus(bool status);
 private:
 	void ProductionManager::createUnit(BuildOrderItem<PRIORITY_TYPE> element);
 	void ProductionManager::createAddon(BuildOrderItem<PRIORITY_TYPE> element);
@@ -66,4 +68,5 @@ private:
 	void ProductionManager::removeUnwantedItems();
 	bool ProductionManager::isTechBuilding(BuildOrderItem<PRIORITY_TYPE> element);
 	BWAPI::Unit* ProductionManager::getUncompletedBuilding(BWAPI::UnitType buildingType);
+	std::set<BWAPI::Unit*> ProductionManager::getAllLarvae();
 };

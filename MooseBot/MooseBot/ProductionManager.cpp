@@ -12,6 +12,7 @@ ProductionManager::ProductionManager()
 	expansionQueued = false;
 	setBuildOrder(StarcraftBuildOrderSearchManager::Instance().getOpeningBuildOrder());
 	deadlockfound = false;
+	expandingIsAdvisable = true;
 	lastProductionFrame = 0;
 	lastExpansionFrame = 0;
 
@@ -231,6 +232,7 @@ BWAPI::Unit* ProductionManager::getBuilding(BWAPI::UnitType buildingType)
 		{
 			return (*i);
 		}
+		/*
 		//incase we are looking for a hatch that is currently morphing
 		else if((buildingType == BWAPI::UnitTypes::Zerg_Hatchery) ||
 			(buildingType == BWAPI::UnitTypes::Zerg_Lair) ||
@@ -241,6 +243,7 @@ BWAPI::Unit* ProductionManager::getBuilding(BWAPI::UnitType buildingType)
 				return (*i);
 			}
 		}
+		*/
 	}
 	return NULL;
 }
@@ -481,6 +484,7 @@ morphs the unit type specified in the build order item
 */
 void ProductionManager::morphUnit(BuildOrderItem<PRIORITY_TYPE> element)
 {
+	/*
 	BWAPI::Unit* structure;
 
 	//check that we can afford to train the new unit
@@ -515,6 +519,38 @@ void ProductionManager::morphUnit(BuildOrderItem<PRIORITY_TYPE> element)
 			return;
 		}
 	}
+	*/
+	std::set<BWAPI::Unit*> larvae = getAllLarvae();
+
+	if(larvae.size() > 0)
+	{
+		BWAPI::Unit* larva = *larvae.begin();
+		larva->morph(element.metaType.unitType);
+	}
+}
+
+//returns all current idle larvae
+std::set<BWAPI::Unit*> ProductionManager::getAllLarvae()
+{
+	std::set<BWAPI::Unit*> larvae;
+
+	//go through all buildings and find the ones with idle larvae
+	for(std::set<Unit*>::const_iterator i = buildings.begin(); i != buildings.end(); i++)
+	{
+//		if(((*i)->getType() == BWAPI::UnitTypes::Zerg_Hatchery) ||
+//			((*i)->getType() == BWAPI::UnitTypes::Zerg_Lair) ||
+//			((*i)->getType() == BWAPI::UnitTypes::Zerg_Hive))
+//		{
+		std::set<BWAPI::Unit*> gotLarvae = (*i)->getLarva();
+			//add all the larvae found to the total
+			for(std::set<Unit*>::const_iterator l = gotLarvae.begin(); l != gotLarvae.end(); l++)
+			{
+				larvae.insert(*l);
+			}
+//		}
+	}
+
+	return larvae;
 }
 
 /*
@@ -533,7 +569,7 @@ void ProductionManager::createBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 	{
 		for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 		{
-			if ((*i)->getType().isResourceDepot())
+			if((*i)->getType().isResourceDepot())
 			{
 				buildPosition = (*i)->getTilePosition();
 				break;
@@ -545,7 +581,7 @@ void ProductionManager::createBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 	if((Broodwar->self()->minerals() >= element.metaType.mineralPrice()) && (Broodwar->self()->gas() >= element.metaType.gasPrice()))
 	{
 		//when constructing an expansion
-		if(element.metaType.unitType.isResourceDepot())
+		if(element.metaType.unitType.isResourceDepot() && expandingIsAdvisable)
 		{
 			if(workerManager.getExpansionBuilder() == NULL)
 			{
@@ -847,4 +883,16 @@ bool ProductionManager::isTechBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 		return true;
 	}
 	return false;
+}
+
+void ProductionManager::setExpansionStatus(bool status)
+{
+	if(status)
+	{
+		expandingIsAdvisable = true;
+	}
+	else
+	{
+		expandingIsAdvisable = false;
+	}
 }

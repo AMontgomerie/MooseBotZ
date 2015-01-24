@@ -1,0 +1,19 @@
+01/24/2015
+- copied over old 2014 moosebot code
+- switched race to Z
+- fixed bug causing only 1 larvae to be morphed at a time
+- fixed bug meaning larvae couldn't be morphed when there was a morphing hatchery
+- created getAllLarvae() method which returns a pool of all idle larvae so they can be spent easily
+- fixed bug causing only 1 zergling from each pair to be added to army
+- removed overlords from regroup commands because they are really slow and were causing attacks to be delayed
+- added check to base count vs enemy base count to prevent over expanding
+	- additional bases are now produced as macro hatcheries
+	- will need a fix if switch back to T/P to prevent random nexus/cc spamming
+
+plans:
+- introduce more micro
+- fix build order search bugs
+- add muta harass
+
+bugs:
+- build order search hangs up if told to find a BO including anything except mutas or hydras

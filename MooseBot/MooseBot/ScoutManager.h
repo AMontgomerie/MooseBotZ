@@ -11,6 +11,7 @@ class ScoutManager
 {
 	BWAPI::Unit* scout;
 	std::set<BWAPI::Position> knownEnemyBases;
+	std::set<BWAPI::Position> knownEnemyMiningBases;
 	std::set<std::pair<BWAPI::Unit*, BWAPI::UnitType>> knownEnemyUnits;
 	int enemyStaticD;
 	int enemyArmySupply;
@@ -35,6 +36,9 @@ public:
 	void ScoutManager::removeEnemyStaticD();
 	int ScoutManager::getTotalEnemyStaticD();
 	void ScoutManager::scoutExpos();
+	int ScoutManager::getEnemyMiningBaseCount();
 private:
 	void ScoutManager::calculateEnemyArmySupply();
+	void ScoutManager::addEnemyMiningBase(BWAPI::Unit* enemyBase);
+	void ScoutManager::removeEnemyMiningBase(BWAPI::Unit* enemyBase);
 };

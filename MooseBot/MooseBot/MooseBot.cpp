@@ -54,11 +54,33 @@ void MooseBot::onFrame()
 	armyManager.setAttackPosition(scoutManager.getEnemyBase()); 
 	armyManager.setEnemyArmySupply(scoutManager.getEnemyArmySupply() + (scoutManager.getTotalEnemyStaticD() * 2)); //enemy army supply + (number of static defence * 4) 
 
+	int hatcheryCount = 0;
+
+	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+	{	
+		if((*i)->getType().isResourceDepot())
+		{
+			hatcheryCount++;
+		}
+	}
+
+	//if we have more bases than our opponent then we don't need to keep expanding
+	//this will trigger zerg to build additional macro hatcheries instead
+	if((hatcheryCount > scoutManager.getEnemyMiningBaseCount()))
+	{
+		productionManager.setExpansionStatus(false);
+	}
+	else
+	{
+		productionManager.setExpansionStatus(true);
+	}
+
 	productionManager.update();
 	armyManager.update();
 	scoutManager.update();
 	StrategyManager::Instance().setEnemyComposition(scoutManager.getEnemyComposition());
 	checkUnderAttack();
+
 
 	if(scoutManager.enemyHasCloak() && !cloakDetected)
 	{
@@ -271,6 +293,11 @@ void MooseBot::onUnitComplete(BWAPI::Unit* unit)
 		if(unit->getType().isBuilding())
 		{
 			productionManager.addBuilding(unit);	
+		}
+		// to prevent only 1 zergling from each pair being added to army during morph time
+		else if(unit->getType() == BWAPI::UnitTypes::Zerg_Zergling)
+		{
+			armyManager.addUnit(unit);
 		}
 		else if(unit->getType().isWorker() && (Broodwar->self()->getRace() != BWAPI::Races::Zerg))
 		{

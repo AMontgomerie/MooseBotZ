@@ -509,7 +509,10 @@ bool ArmyManager::regroup()
 		//feed all current units into the set of units that are regrouping so we can check if they arrive
 		for(std::set<std::pair<Unit*, int>>::const_iterator i = allArmy.begin(); i != allArmy.end(); i++)
 		{
-			regroupingUnits.insert((*i).first);
+			if((*i).first->getType() != BWAPI::UnitTypes::Zerg_Overlord)
+			{
+				regroupingUnits.insert((*i).first);
+			}
 		}
 		regroupOrdered = true;
 		regroupFrame = BWAPI::Broodwar->getFrameCount();

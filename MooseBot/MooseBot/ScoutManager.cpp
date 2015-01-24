@@ -90,11 +90,34 @@ adds an enemy base to the set of known enemy base locations
 void ScoutManager::addEnemyBase(BWAPI::Unit* enemyBase)
 {
 	knownEnemyBases.insert(enemyBase->getPosition());
+	
+	if(enemyBase->getType().isResourceDepot())
+	{
+		addEnemyMiningBase(enemyBase);
+	}
+}
+
+/*
+adds an enemy base to the set of known enemy base locations
+*/
+void ScoutManager::addEnemyMiningBase(BWAPI::Unit* enemyBase)
+{
+	knownEnemyMiningBases.insert(enemyBase->getPosition());
 }
 
 void ScoutManager::removeEnemyBase(BWAPI::Unit* enemyBase)
 {
 	knownEnemyBases.erase(enemyBase->getPosition());
+
+	if(enemyBase->getType().isResourceDepot())
+	{
+		removeEnemyMiningBase(enemyBase);
+	}
+}
+
+void ScoutManager::removeEnemyMiningBase(BWAPI::Unit* enemyBase)
+{
+	knownEnemyMiningBases.erase(enemyBase->getPosition());
 }
 
 /*
@@ -295,4 +318,9 @@ void ScoutManager::scoutExpos()
 			break; 
 		}
 	}
+}
+
+int ScoutManager::getEnemyMiningBaseCount()
+{
+	return knownEnemyMiningBases.size();
 }
