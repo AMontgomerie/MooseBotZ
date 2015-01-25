@@ -7,7 +7,6 @@ Distributed under GPL v3, see LICENSE for details.
 
 #include <BWAPI.h>
 #include <BWTA.h>
-#define NOMINMAX
 #include <windows.h>
 #include "ProductionManager.h"
 #include "ArmyManager.h"

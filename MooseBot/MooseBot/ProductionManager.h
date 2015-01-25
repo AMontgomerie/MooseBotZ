@@ -9,7 +9,9 @@ Distributed under GPL v3, see LICENSE for details.
 #include "BuildOrderQueue.h"
 #include "BuildingPlacer.h"
 #include "WorkerManager.h"
-#include "StarcraftBuildOrderSearchManager.h"
+#include "BuildOrderGenerator.h"
+#include "StrategyManager.h"
+
 
 #define MAXWAIT 720*2
 
@@ -18,6 +20,8 @@ class ProductionManager
 	WorkerManager						workerManager;
 	BuildingPlacer						buildingPlacer;
 	BuildOrderQueue						production;
+	BuildOrderGenerator					buildOrderGenerator;
+	StrategyManager						strategyManager;
 
 	std::set<BWAPI::Unit*>				buildings;
 	std::vector<BWAPI::Unit*>			gas;
@@ -30,12 +34,12 @@ class ProductionManager
 	int									lastProductionFrame;
 	int									lastExpansionFrame;
 
-	std::vector< std::pair<MetaType, UnitCountType> > goal;
+	std::vector< std::pair<MetaType, int> > goal;
 public:
 	ProductionManager::ProductionManager();
-	void ProductionManager::setBuildOrder(const std::vector<MetaType> & buildOrder);
-	void ProductionManager::performBuildOrderSearch(const std::vector< std::pair<MetaType, UnitCountType> > & goal);
-	void ProductionManager::update();
+	void ProductionManager::setBuildOrder(std::vector<MetaType> buildOrder);
+	void ProductionManager::generateBuildOrder(std::vector< std::pair<MetaType, int> > goal);
+	void ProductionManager::update(int armyStatus);
 	void ProductionManager::checkGas();
 	void ProductionManager::addElement(BuildOrderItem<PRIORITY_TYPE> element);
 	void ProductionManager::removeElement();
@@ -62,7 +66,7 @@ private:
 	void ProductionManager::startUpgrade(BuildOrderItem<PRIORITY_TYPE> element);
 	bool ProductionManager::canAfford(BuildOrderItem<PRIORITY_TYPE> element);
 	void ProductionManager::beginProduction(BuildOrderItem<PRIORITY_TYPE> element);
-	void ProductionManager::drawGoalInformation(int x, int y, std::vector< std::pair<MetaType, UnitCountType> > goal);
+	void ProductionManager::drawGoalInformation(int x, int y, std::vector< std::pair<MetaType, int> > goal);
 	void ProductionManager::checkForDeadlock();
 	void ProductionManager::checkMinerals();
 	void ProductionManager::removeUnwantedItems();

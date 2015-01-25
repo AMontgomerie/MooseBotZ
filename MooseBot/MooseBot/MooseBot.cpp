@@ -75,10 +75,10 @@ void MooseBot::onFrame()
 		productionManager.setExpansionStatus(true);
 	}
 
-	productionManager.update();
+	productionManager.update(armyManager.getArmyStatus());
 	armyManager.update();
 	scoutManager.update();
-	StrategyManager::Instance().setEnemyComposition(scoutManager.getEnemyComposition());
+	//StrategyManager::Instance().setEnemyComposition(scoutManager.getEnemyComposition());
 	checkUnderAttack();
 
 

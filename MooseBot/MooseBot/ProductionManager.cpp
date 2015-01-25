@@ -10,7 +10,7 @@ ProductionManager::ProductionManager()
 {
 	expanding = false;
 	expansionQueued = false;
-	setBuildOrder(StarcraftBuildOrderSearchManager::Instance().getOpeningBuildOrder());
+	setBuildOrder(buildOrderGenerator.getOpeningBuildOrder());
 	deadlockfound = false;
 	expandingIsAdvisable = true;
 	lastProductionFrame = 0;
@@ -29,7 +29,7 @@ ProductionManager::ProductionManager()
 taken from UAlbertaBot
 Copies the build order described in the parameter into the production queue
 */
-void ProductionManager::setBuildOrder(const std::vector<MetaType> & buildOrder)
+void ProductionManager::setBuildOrder(std::vector<MetaType> buildOrder)
 {
 	// clear the current build order
 	production.clearAll();
@@ -43,42 +43,32 @@ void ProductionManager::setBuildOrder(const std::vector<MetaType> & buildOrder)
 	}
 }
 
-/*
-taken from UAlbertaBot
-Takes an inputted goal consisting of a vector of pairs made up of unit types and unit counts
-Performs a search to find a build order which results in the goal units being created
-When a build order is found, it is added to the production queue
-*/
-void ProductionManager::performBuildOrderSearch(const std::vector< std::pair<MetaType, UnitCountType> > & goal)
-{	
-	std::vector<MetaType> buildOrder = StarcraftBuildOrderSearchManager::Instance().findBuildOrder(goal);
+void ProductionManager::generateBuildOrder(std::vector< std::pair<MetaType, int> > goal)
+{
+	std::vector<MetaType> buildOrder = buildOrderGenerator.generateBuildOrder(goal, buildings);
+
 	// set the build order
 	setBuildOrder(buildOrder);
 }
 
-void ProductionManager::update()
+void ProductionManager::update(int armyStatus)
 {
-	StarcraftBuildOrderSearchManager::Instance().update(35); //update the current build order search to allow it to run for 35ms
-	//if(!workerManager.update())
-	//{
-	//	production.queueAsHighestPriority(MetaType(BWAPI::UnitTypes::Protoss_Nexus), true);
-	//}
 	workerManager.update();
-//	checkGas(); //check if we need to put workers in gas (now handled in WorkerManager)
+
 	checkMinerals();
 	production.drawQueueInformation(10, 10);
-	StrategyManager::Instance().drawEnemyInformation(180, 10);
-
+//	StrategyManager::Instance().drawEnemyInformation(180, 10);
+	strategyManager.update(buildOrderGenerator.getTechLevel(), armyStatus);
 	checkForDeadlock();
 
 	//if the production queue is empty
 	if(emptyQueue())
 	{
 		//get a new build order goal
-		const std::vector< std::pair<MetaType, UnitCountType> > goal = StrategyManager::Instance().getBuildOrderGoal();
+		std::vector< std::pair<MetaType, int> > goal = strategyManager.getNewGoal();
 		drawGoalInformation(10, 100, goal);
 		//perform a new build order search
-		performBuildOrderSearch(goal);
+		generateBuildOrder(goal);
 	}
 	else
 	{
@@ -743,7 +733,7 @@ void ProductionManager::produceDetection()
 /*
 prints information about the current build order goal on to the screen
 */
-void ProductionManager::drawGoalInformation(int x, int y, std::vector< std::pair<MetaType, UnitCountType> > goal)
+void ProductionManager::drawGoalInformation(int x, int y, std::vector< std::pair<MetaType, int> > goal)
 {
 	int i = 0;
 
@@ -754,7 +744,7 @@ void ProductionManager::drawGoalInformation(int x, int y, std::vector< std::pair
 		BWAPI::Broodwar->drawTextScreen(x, y+(i*10), "\x04No Goal");
 	}
 
-	for(std::vector<std::pair<MetaType, UnitCountType>>::iterator unit = goal.begin(); unit != goal.end(); unit++)
+	for(std::vector<std::pair<MetaType, int>>::iterator unit = goal.begin(); unit != goal.end(); unit++)
 	{
 		BWAPI::Broodwar->drawTextScreen(x, y+(i*10), "\x04%d %s", (*unit).second, (*unit).first.getName().c_str());
 		i++;

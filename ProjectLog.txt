@@ -1,4 +1,4 @@
-01/24/2015
+24/01/2015
 - copied over old 2014 moosebot code
 - switched race to Z
 - fixed bug causing only 1 larvae to be morphed at a time
@@ -17,3 +17,22 @@ plans:
 
 bugs:
 - build order search hangs up if told to find a BO including anything except mutas or hydras
+
+25/01/2015
+- removed buildordersearch
+- removed strategy manager
+- added buildordergenerator
+	- takes build order goal inputs and turns a vector of executable metatypes
+	- calculates supply required and adds additional overlords
+	- takes required buildings into account and constructs ones we dont have
+	- checks if we dont have required lair/hive and adds one to queue if needed
+- created new strategy manager
+	- provides build order goals
+		- has a set of ideal game states
+		- compares current state to the next ideal state
+		- build anything that is missing from the ideal state
+
+plans:
+- introduce a way to modify goals depending on the situation
+	- e.g. dont make loads of drones if enemy is coming to attack
+	- change type of unit being made depending on the point in the game which we are at
