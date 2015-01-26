@@ -30,6 +30,7 @@ class ProductionManager
 	bool								deadlockfound;
 	bool								expansionQueued;
 	bool								expandingIsAdvisable;
+	bool								currentThreat;
 	BWAPI::TilePosition					centre;
 	int									lastProductionFrame;
 	int									lastExpansionFrame;
@@ -58,6 +59,8 @@ public:
 	void ProductionManager::setCentre(BWAPI::TilePosition centre);
 	void ProductionManager::clearProductionQueue();
 	void ProductionManager::setExpansionStatus(bool status);
+	void ProductionManager::underThreat(bool newThreat);
+	void ProductionManager::updateBuildOrderGenTechLevel(int techLevel);
 private:
 	void ProductionManager::createUnit(BuildOrderItem<PRIORITY_TYPE> element);
 	void ProductionManager::createAddon(BuildOrderItem<PRIORITY_TYPE> element);

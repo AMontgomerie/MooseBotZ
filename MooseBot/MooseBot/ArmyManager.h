@@ -16,21 +16,25 @@ Distributed under GPL v3, see LICENSE for details.
 #include "..\..\SparCraft1\source\Player_Kiter_NOKDPS.h"
 */
 
-#define REGROUPDIST 250	// the pixel distance a unit must be within to count as having arrived at the regroup location
-#define MAXREGROUPTIME 720	//the frame count that we are willing to wait for units to arrive at the regroup location
+#define REGROUPDIST 500	// the pixel distance a unit must be within to count as having arrived at the regroup location
+#define MAXREGROUPTIME 360	//the frame count that we are willing to wait for units to arrive at the regroup location
 
 class ArmyManager
 {
 	std::set<std::pair<BWAPI::Unit*, int>> allArmy;
+	std::set<BWAPI::Unit*> mainArmy;
+	std::set<BWAPI::Unit*> mutas;
 	std::set<BWAPI::Unit*> regroupingUnits;
 	std::set<BWAPI::Unit*> visibleEnemies;
 	std::set<BWAPI::Unit*> combatWorkers;
 	BWAPI::Position attackPosition;
+	BWAPI::Position mutaAttackPosition;
 	BWAPI::Position defendPosition;
 	BWAPI::Position rallyPoint;
 	BWAPI::Position regroupPosition;
 //	SparCraft::Map map;
 	int armyStatus;
+	int mutaStatus;
 	bool regroupOrdered;
 	bool attackIssued;
 	bool retreatIssued;
@@ -63,6 +67,14 @@ public:
 	void ArmyManager::setAttackPosition(BWAPI::Position position);
 	void ArmyManager::findEnemyBase();
 	void ArmyManager::setEnemyArmySupply(int supply);
+	void ArmyManager::mutaAttack(BWAPI::Position position);
+	void ArmyManager::mutaAttack(BWAPI::Unit* target);
+	void ArmyManager::mutaMove(BWAPI::Position position);
+	void ArmyManager::mainArmyAttack(BWAPI::Position position);
+	void ArmyManager::mainArmyAttack(BWAPI::Unit* target);
+	void ArmyManager::mainArmyMove(BWAPI::Position position);
+	void ArmyManager::mainArmyRetreat();
+	void ArmyManager::mutaRetreat();
 
 	enum {scout = 0, retreat = 1, attack = 2, defend = 3};
 
@@ -78,4 +90,5 @@ private:
 	void ArmyManager::clearCombatWorkers();
 	void ArmyManager::kite();
 	bool ArmyManager::haveDetection();
+	void mutaHarass(BWAPI::Position attackPosition);
 };

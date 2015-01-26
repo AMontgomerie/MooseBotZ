@@ -88,6 +88,24 @@ void MooseBot::onFrame()
 		cloakDetected = true;
 	}
 
+	bool foundThreat = false;
+	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+	{
+		if((*i)->getType().isResourceDepot())
+		{
+			if(((armyManager.getClosestEnemy(*i) != NULL) && (armyManager.getClosestEnemy(*i) != NULL)) &&
+				(armyManager.getClosestEnemy(*i)->getDistance(*i) < armyManager.getClosestEnemy(*i)->getDistance(scoutManager.getClosestEnemyBase(*i))))
+			{
+				productionManager.underThreat(true);
+				foundThreat = true;
+			}
+		}
+	}
+	if(!foundThreat)
+	{
+		productionManager.underThreat(false);
+	}
+
 	//if map analysis is complete
 	if(analyzed)
 	{
@@ -219,6 +237,14 @@ void MooseBot::onUnitMorph(BWAPI::Unit* unit)
 			else if(unit->getType().isBuilding())
 			{
 				productionManager.addBuilding(unit);	
+				if(unit->getType() == BWAPI::UnitTypes::Zerg_Lair)
+				{
+					productionManager.updateBuildOrderGenTechLevel(2);
+				}
+				else if(unit->getType() == BWAPI::UnitTypes::Zerg_Hive)
+				{
+					productionManager.updateBuildOrderGenTechLevel(3);
+				}
 			}
 			else if(unit->getType().isWorker())
 			{

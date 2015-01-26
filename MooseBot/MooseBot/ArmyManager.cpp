@@ -13,6 +13,7 @@ or orders can be issued to all units, or all units of a given UnitType.
 using namespace BWAPI;
 
 ArmyManager::ArmyManager(void) : armyStatus(scout),
+								mutaStatus(attack),
 								regroupOrdered(false), 
 								regroupFrame(0),
 								rallyPoint(Position(0,0)),
@@ -38,6 +39,10 @@ void ArmyManager::update()
 	{
 		executeDefence();
 	}
+	if((armyStatus != defend) && (armyStatus != scout))// && (Broodwar->getFrameCount() % 24 == 0))
+	{
+		mutaHarass(attackPosition);
+	}
 }
 
 /*
@@ -48,45 +53,45 @@ void ArmyManager::executeAttack()
 	BWAPI::Unit* closestEnemy = NULL;
 	BWAPI::Unit* closestUnit = NULL;
 
-	for(std::set<std::pair<Unit*,int>>::const_iterator i=allArmy.begin();i!=allArmy.end();i++)
+	for(std::set<Unit*>::const_iterator i=mainArmy.begin();i!=mainArmy.end();i++)
 	{
 		//if this is a unit that can't attack but that we want to have with our army (e.g. observer)
 		//tell it to follow a friendly army unit that can attack
-		if(!(*i).first->getType().canAttack() || ((*i).first->getType() == BWAPI::UnitTypes::Protoss_Arbiter))
+		if(!(*i)->getType().canAttack() || ((*i)->getType() == BWAPI::UnitTypes::Protoss_Arbiter))
 		{
 			//find the closest unit to the attack position
-			for(std::set<std::pair<Unit*, int>>::const_iterator j = allArmy.begin(); j != allArmy.end(); j++)
+			for(std::set<Unit*>::const_iterator j = mainArmy.begin(); j != mainArmy.end(); j++)
 			{
-				if((closestUnit == NULL) || attackPosition.getDistance((*j).first->getPosition()) < attackPosition.getDistance(closestUnit->getPosition()) && (*j).first->getType().canAttack())
+				if((closestUnit == NULL) || attackPosition.getDistance((*j)->getPosition()) < attackPosition.getDistance(closestUnit->getPosition()) && (*j)->getType().canAttack())
 				{
-					closestUnit = (*j).first;
+					closestUnit = (*j);
 				}
 			}
 			if(closestUnit != NULL)
 			{
-				(*i).first->attack(closestUnit->getPosition(), false);
+				(*i)->attack(closestUnit->getPosition(), false);
 			}
 		}
 		//find a target for our army units that can attack
 		else
 		{
-			closestEnemy = getClosestEnemy((*i).first);
+			closestEnemy = getClosestEnemy((*i));
 			if((closestEnemy != NULL) && closestEnemy->isVisible())
 			{
-				if((*i).first->isUnderAttack())
+				if((*i)->isUnderAttack())
 				{
-					(*i).first->attack(closestEnemy, false);
+					(*i)->attack(closestEnemy, false);
 				}
-				else if((*i).first->isIdle())
+				else if((*i)->isIdle())
 				{
-					(*i).first->attack(closestEnemy, false);
+					(*i)->attack(closestEnemy, false);
 				}
 			}
 			else
 			{
-				if((*i).first->isIdle() && (attackPosition != Position(0,0)) && (attackPosition != NULL))
+				if((*i)->isIdle() && (attackPosition != Position(0,0)) && (attackPosition != NULL))
 				{
-					(*i).first->attack(attackPosition, false);
+					(*i)->attack(attackPosition, false);
 				}
 			}
 		}
@@ -212,6 +217,15 @@ add a unit to the army
 void ArmyManager::addUnit(BWAPI::Unit* unit)
 {
 	allArmy.insert(std::make_pair(unit, 0));
+
+	if(unit->getType() != BWAPI::UnitTypes::Zerg_Mutalisk)
+	{
+		mainArmy.insert(unit);
+	}
+	else
+	{
+		mutas.insert(unit);
+	}
 	if(rallyPoint != Position(0,0))
 	{
 		if(regroupOrdered)
@@ -235,6 +249,14 @@ void ArmyManager::removeUnit(BWAPI::Unit* unit)
 		if((*i).first == unit)
 		{
 			allArmy.erase(*i);
+			if(unit->getType() != BWAPI::UnitTypes::Zerg_Mutalisk)
+			{
+				mainArmy.erase(unit);
+			}
+			else
+			{
+				mutas.erase(unit);
+			}
 			break;
 		}
 	}
@@ -302,6 +324,41 @@ void ArmyManager::allAttack(BWAPI::Position position)
 	}
 }
 
+void ArmyManager::mainArmyAttack(BWAPI::Position position)
+{
+	if(position != NULL)
+	{
+		for(std::set<Unit*>::const_iterator i=mainArmy.begin();i!=mainArmy.end();i++)
+		{
+			(*i)->attack(position, false);
+		}
+		armyStatus = attack;
+		attackPosition = position;
+	}
+	else
+	{
+		Broodwar->printf("ArmyManager Error: invalid attack position");
+	}
+}
+
+void ArmyManager::mutaAttack(BWAPI::Position position)
+{
+	if(position != NULL)
+	{
+		for(std::set<Unit*>::const_iterator i=mutas.begin();i!=mutas.end();i++)
+		{
+			(*i)->attack(position, false);
+		}
+		mutaStatus = attack;
+		mutaAttackPosition = position;
+	}
+	else
+	{
+		Broodwar->printf("ArmyManager Error: invalid attack position");
+	}
+}
+
+
 /*
 tell every unit in the army to attack a specific unit
 */
@@ -321,6 +378,38 @@ void ArmyManager::allAttack(BWAPI::Unit* target)
 	}
 }
 
+void ArmyManager::mutaAttack(BWAPI::Unit* target)
+{
+	if(target != NULL)
+	{
+		for(std::set<Unit*>::const_iterator i=mutas.begin();i!=mutas.end();i++)
+		{
+			(*i)->attack(target, false);
+		}
+		//armyStatus = attack;
+	}
+	else
+	{
+		Broodwar->printf("ArmyManager Error: invalid attack target");
+	}
+}
+
+void ArmyManager::mainArmyAttack(BWAPI::Unit* target)
+{
+	if(target != NULL)
+	{
+		for(std::set<Unit*>::const_iterator i=mainArmy.begin();i!=mainArmy.end();i++)
+		{
+			(*i)->attack(target, false);
+		}
+		armyStatus = attack;
+	}
+	else
+	{
+		Broodwar->printf("ArmyManager Error: invalid attack target");
+	}
+}
+
 void ArmyManager::allMove(BWAPI::Position position)
 {
 	if(position != NULL)
@@ -328,6 +417,36 @@ void ArmyManager::allMove(BWAPI::Position position)
 		for(std::set<std::pair<Unit*, int>>::const_iterator i=allArmy.begin();i!=allArmy.end();i++)
 		{
 			(*i).first->move(position, false);
+		}
+	}
+	else
+	{
+		Broodwar->printf("ArmyManager Error: invalid move position");
+	}
+}
+
+void ArmyManager::mutaMove(BWAPI::Position position)
+{
+	if(position != NULL)
+	{
+		for(std::set<Unit*>::const_iterator i = mutas.begin(); i != mutas.end(); i++)
+		{
+			(*i)->move(position, false);
+		}
+	}
+	else
+	{
+		Broodwar->printf("ArmyManager Error: invalid move position");
+	}
+}
+
+void ArmyManager::mainArmyMove(BWAPI::Position position)
+{
+	if(position != NULL)
+	{
+		for(std::set<Unit*>::const_iterator i = mainArmy.begin(); i != mainArmy.end(); i++)
+		{
+			(*i)->move(position, false);
 		}
 	}
 	else
@@ -476,6 +595,51 @@ void ArmyManager::allRetreat()
 	armyStatus = retreat;
 }
 
+void ArmyManager::mainArmyRetreat()
+{
+	if((rallyPoint != NULL) && (rallyPoint != Position(0,0)))
+	{
+		mainArmyMove(rallyPoint);
+	}
+	else
+	{
+		for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+		{
+			if ((*i)->getType().isResourceDepot())
+			{
+				rallyPoint = (*i)->getPosition();
+				break;
+			}
+		}
+
+		mainArmyMove(rallyPoint);
+	}
+	armyStatus = retreat;
+}
+
+void ArmyManager::mutaRetreat()
+{
+	if((rallyPoint != NULL) && (rallyPoint != Position(0,0)))
+	{
+		mutaMove(rallyPoint);
+	}
+	else
+	{
+		for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+		{
+			if ((*i)->getType().isResourceDepot())
+			{
+				rallyPoint = (*i)->getPosition();
+				break;
+			}
+		}
+
+		mutaMove(rallyPoint);
+	}
+	mutaStatus = retreat;
+}
+
+
 void ArmyManager::setArmyStatus(int status)
 {
 	armyStatus = status;
@@ -501,17 +665,17 @@ bool ArmyManager::regroup()
 	bool regroupComplete = false;
 
 	//if we haven't yet ordered the regroup to commence
-	if(!regroupOrdered && !allArmy.empty())
+	if(!regroupOrdered && !mainArmy.empty())
 	{
 		regroupPosition = rallyPoint;
-		allMove(regroupPosition);
+		mainArmyMove(regroupPosition);
 
 		//feed all current units into the set of units that are regrouping so we can check if they arrive
-		for(std::set<std::pair<Unit*, int>>::const_iterator i = allArmy.begin(); i != allArmy.end(); i++)
+		for(std::set<Unit*>::const_iterator i = mainArmy.begin(); i != mainArmy.end(); i++)
 		{
-			if((*i).first->getType() != BWAPI::UnitTypes::Zerg_Overlord)
+			if((*i)->getType() != BWAPI::UnitTypes::Zerg_Overlord)
 			{
-				regroupingUnits.insert((*i).first);
+				regroupingUnits.insert(*i);
 			}
 		}
 		regroupOrdered = true;
@@ -636,14 +800,14 @@ void ArmyManager::updateStatus()
 
 				if(regroup())
 				{
-					allAttack(attackPosition);
+					mainArmyAttack(attackPosition);
 					attackIssued = true;
 					retreatIssued = false;
 				}
 			}
 			else if(enemyArmySupply >= getArmySupply() && !retreatIssued)
 			{
-				allRetreat();
+				mainArmyRetreat();
 				attackIssued = false;
 				retreatIssued = true;
 			}
@@ -809,10 +973,61 @@ bool ArmyManager::haveDetection()
 	{
 		detectors = getAllUnitType(BWAPI::UnitTypes::Protoss_Observer);
 	}
+	else if(BWAPI::Broodwar->self()->getRace() == BWAPI::Races::Zerg)
+	{
+		return true; //we're always going to have at least 1 overlord (if we don't we're probably dead anyway)
+	}
 
 	if(detectors.size() > 0)
 	{
 		return true;
 	}
 	return false;
+}
+
+void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
+{
+	for(std::set<Unit*>::const_iterator i=mutas.begin();i!=mutas.end();i++)
+	{
+		int threatSupply = 0;
+		int maxThreatRange = 0;
+
+		for(std::set<Unit*>::const_iterator e = visibleEnemies.begin(); e != visibleEnemies.end(); e++)
+		{
+			if((((*e)->getType().airWeapon() != NULL) || (*e)->getType().groundWeapon().targetsAir()) && ((*i)->getDistance(*e) < 400))
+			{
+				threatSupply += (*e)->getType().supplyRequired();
+				if((*e)->getType().airWeapon().maxRange() > maxThreatRange)
+				{
+				//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().airWeapon().maxRange());
+					maxThreatRange = (*e)->getType().airWeapon().maxRange();
+				}
+				else if((*e)->getType().groundWeapon().targetsAir() && ((*e)->getType().groundWeapon().maxRange() > maxThreatRange))
+				{
+				//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().groundWeapon().maxRange());
+					maxThreatRange = (*e)->getType().groundWeapon().maxRange();
+				}
+			}
+		}
+		//Broodwar->printf("threat range %d", maxThreatRange);
+
+		int nearbyMutaSupply = 0;
+
+		for(std::set<Unit*>::const_iterator m = mutas.begin(); m != mutas.end(); m++)
+		{
+			if((*i)->getDistance(*m) < 200)
+			{
+				nearbyMutaSupply += BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired();
+			}
+		}
+
+		if(((nearbyMutaSupply) > threatSupply) && (Broodwar->getFrameCount() % 24 == 0))
+		{
+			(*i)->attack(attackPosition, false);
+		}
+		else if(((*i)->getDistance(getClosestEnemy(*i)) <= maxThreatRange) && (Broodwar->getFrameCount() % 24 == 0))
+		{
+			(*i)->move(rallyPoint, false);
+		}
+	}
 }

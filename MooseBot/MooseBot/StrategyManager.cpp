@@ -101,15 +101,15 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 {
 	std::vector<std::pair<MetaType, int>> newGoal;
 
-	if((currentState.getWorkerCount() < nextState->getWorkerCount()) && armyStatus != defend)
+	if((currentState.getWorkerCount() < nextState->getWorkerCount()) && (armyStatus != defend) && !threatStatus)
 	{
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Drone, (nextState->getWorkerCount() - currentState.getWorkerCount())));
 	}
-	if((currentState.getHatcheryCount() < nextState->getHatcheryCount()) && armyStatus != defend)
+	if((currentState.getHatcheryCount() < nextState->getHatcheryCount()) && (armyStatus != defend)  && !threatStatus)
 	{
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hatchery, 1));
 	}
-	if(currentState.getGasCount() < nextState->getGasCount())
+	if(currentState.getGasCount() < nextState->getGasCount() && (armyStatus != defend) && !threatStatus)
 	{
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Extractor, 1));
 	}
@@ -129,8 +129,31 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 		changeState();
 	}
 
-	newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 5));
-	newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Mutalisk, 4));
+	newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 3));
+	//newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hydralisk, 4));
+
+	switch(currentState.getTechLevel())
+	{
+	case 1:
+		if(threatStatus)
+		{
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 2));
+
+		}
+		break;
+	case 2:
+		if(threatStatus)
+		{
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 3));
+		}
+		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Mutalisk, 4));
+		break;
+	case 3:
+		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 4));
+		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Ultralisk, 3));
+	}
 
 	return newGoal;
 }
@@ -164,10 +187,30 @@ void StrategyManager::update(int techLevel, int armyStatus)
 		{
 			hive = true;
 		}
+		if((*i)->getType() == BWAPI::UnitTypes::Zerg_Lair)
+		{
+			techLevel = 2;
+		}
+		if((*i)->getType() == BWAPI::UnitTypes::Zerg_Hive)
+		{
+			techLevel = 3;
+		}
 	}
 
 	currentState.setTechLevel(techLevel);
 	currentState.setWorkerCount(workerCount);
 	currentState.setHatcheryCount(hatcheryCount);
 	currentState.setGasCount(gasCount);
+}
+
+void StrategyManager::setThreatStatus(bool threat)
+{
+	if(threat)
+	{
+		threatStatus = true;
+	}
+	else
+	{
+		threatStatus = false;
+	}
 }

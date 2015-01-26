@@ -32,6 +32,7 @@ class StrategyManager
 	GameState *nextState;
 	bool lair;
 	bool hive;
+	bool threatStatus;
 	int armyStatus;
 public:	
 	StrategyManager();
@@ -39,5 +40,7 @@ public:
 	void update(int techLevel, int armyStatus);
 	std::vector<std::pair<MetaType, int>> getNewGoal();
 	void changeState();
+	void setThreatStatus(bool threat);
+
 	enum {scout = 0, retreat = 1, attack = 2, defend = 3};
 };

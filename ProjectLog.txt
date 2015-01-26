@@ -36,3 +36,26 @@ plans:
 - introduce a way to modify goals depending on the situation
 	- e.g. dont make loads of drones if enemy is coming to attack
 	- change type of unit being made depending on the point in the game which we are at
+
+26/01/2015
+
+- seperated mutas from main army so they can harass and not retreat when army retreats
+	- still very crude, needs work
+- added check for threats (if enemy units are closer to my base than their base)
+	- when a threat is present, ai will stop making drones and make extra units and static D
+	- when there is no threat, ai will make more drones and less units
+- unit composition goals now scale with tech
+	- will go ling > muta/ling > ultra/ling
+
+bugs:
+- makes 2 hives
+- gets stuck regrouping for ages
+- muta micro is a mess
+- lings dont always retreat/regroup to the correct place
+- overlord behaviour is a bit random
+- making too many hatcheries at 1 base and walling in
+	- should take more expansions even vs 1 base opponent
+
+extra improvements
+- add ability to get important upgrades outside of scripted build order
+	- e.g. when in midgame state, build evos and get 1/1 or something

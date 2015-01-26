@@ -15,6 +15,7 @@ ProductionManager::ProductionManager()
 	expandingIsAdvisable = true;
 	lastProductionFrame = 0;
 	lastExpansionFrame = 0;
+	currentThreat = false;
 
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
@@ -22,6 +23,24 @@ ProductionManager::ProductionManager()
 		{
 			workerManager.addExpansion(*i);
 		}
+	}
+}
+
+void ProductionManager::underThreat(bool newThreat)
+{
+	if(!currentThreat && newThreat)
+	{
+		currentThreat = true;
+		strategyManager.setThreatStatus(true);
+		clearProductionQueue();
+		std::vector< std::pair<MetaType, int> > goal = strategyManager.getNewGoal();
+		drawGoalInformation(10, 100, goal);
+		generateBuildOrder(goal);
+	}
+	else if(!newThreat)
+	{
+		currentThreat = false;
+		strategyManager.setThreatStatus(false);
 	}
 }
 
@@ -885,4 +904,9 @@ void ProductionManager::setExpansionStatus(bool status)
 	{
 		expandingIsAdvisable = false;
 	}
+}
+
+void ProductionManager::updateBuildOrderGenTechLevel(int techLevel)
+{
+	buildOrderGenerator.setTechLevel(techLevel);
 }
