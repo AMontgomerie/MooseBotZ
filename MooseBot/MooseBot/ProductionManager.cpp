@@ -789,7 +789,6 @@ void ProductionManager::checkForDeadlock()
 	{
 		deadlockfound = true;
 		clearProductionQueue();
-
 	}
 }
 

@@ -18,7 +18,9 @@ ArmyManager::ArmyManager(void) : armyStatus(scout),
 								regroupFrame(0),
 								rallyPoint(Position(0,0)),
 								attackIssued(false),
-								retreatIssued(false)
+								retreatIssued(false),
+								leadMuta(NULL)
+					
 {
 	srand((unsigned int)time(NULL));
 }
@@ -244,6 +246,10 @@ remove a unit from the army
 */
 void ArmyManager::removeUnit(BWAPI::Unit* unit)
 {
+	if(unit == leadMuta)
+	{
+		leadMuta = NULL;
+	}
 	for(std::set<std::pair<Unit*, int>>::const_iterator i=allArmy.begin();i!=allArmy.end();i++)
 	{
 		if((*i).first == unit)
@@ -992,42 +998,58 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 		int threatSupply = 0;
 		int maxThreatRange = 0;
 
-		for(std::set<Unit*>::const_iterator e = visibleEnemies.begin(); e != visibleEnemies.end(); e++)
+		if(leadMuta == NULL)
 		{
-			if((((*e)->getType().airWeapon() != NULL) || (*e)->getType().groundWeapon().targetsAir()) && ((*i)->getDistance(*e) < 400))
+			leadMuta = (*i);
+		}
+		if(((*i) != leadMuta) && ((*i)->getDistance(leadMuta) > 50))// && (BWAPI::Broodwar->getFrameCount() % 24 == 0))
+		{
+			(*i)->move(leadMuta->getPosition(), false);
+		}
+		else if(((*i) != leadMuta) && (leadMuta->isAttacking()) && ((*i)->getDistance(leadMuta) <= 50))// && (BWAPI::Broodwar->getFrameCount() % 24 == 0))
+		{
+			(*i)->attack(leadMuta->getTarget(), false);
+		}
+		else if((*i) == leadMuta)
+		{
+
+			for(std::set<Unit*>::const_iterator e = visibleEnemies.begin(); e != visibleEnemies.end(); e++)
 			{
-				threatSupply += (*e)->getType().supplyRequired();
-				if((*e)->getType().airWeapon().maxRange() > maxThreatRange)
+				if((((*e)->getType().airWeapon() != NULL) || (*e)->getType().groundWeapon().targetsAir()) && ((*i)->getDistance(*e) < 250))
 				{
-				//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().airWeapon().maxRange());
-					maxThreatRange = (*e)->getType().airWeapon().maxRange();
-				}
-				else if((*e)->getType().groundWeapon().targetsAir() && ((*e)->getType().groundWeapon().maxRange() > maxThreatRange))
-				{
-				//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().groundWeapon().maxRange());
-					maxThreatRange = (*e)->getType().groundWeapon().maxRange();
+					threatSupply += (*e)->getType().supplyRequired();
+					if((*e)->getType().airWeapon().maxRange() > maxThreatRange)
+					{
+					//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().airWeapon().maxRange());
+						maxThreatRange = (*e)->getType().airWeapon().maxRange();
+					}
+					else if((*e)->getType().groundWeapon().targetsAir() && ((*e)->getType().groundWeapon().maxRange() > maxThreatRange))
+					{
+					//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().groundWeapon().maxRange());
+						maxThreatRange = (*e)->getType().groundWeapon().maxRange();
+					}
 				}
 			}
-		}
-		//Broodwar->printf("threat range %d", maxThreatRange);
+			//Broodwar->printf("threat range %d", maxThreatRange);
 
-		int nearbyMutaSupply = 0;
+			int nearbyMutaSupply = 0;
 
-		for(std::set<Unit*>::const_iterator m = mutas.begin(); m != mutas.end(); m++)
-		{
-			if((*i)->getDistance(*m) < 200)
+			for(std::set<Unit*>::const_iterator m = mutas.begin(); m != mutas.end(); m++)
 			{
-				nearbyMutaSupply += BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired();
+				if((*i)->getDistance(*m) < 50)
+				{
+					nearbyMutaSupply += BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired();
+				}
 			}
-		}
 
-		if(((nearbyMutaSupply) > threatSupply) && (Broodwar->getFrameCount() % 24 == 0))
-		{
-			(*i)->attack(attackPosition, false);
-		}
-		else if(((*i)->getDistance(getClosestEnemy(*i)) <= maxThreatRange) && (Broodwar->getFrameCount() % 24 == 0))
-		{
-			(*i)->move(rallyPoint, false);
+			if(((nearbyMutaSupply) > threatSupply) && !(*i)->isAttacking())// && (Broodwar->getFrameCount() % 24 == 0))
+			{
+				(*i)->attack(getClosestEnemy(*i), false);
+			}
+			else if(((*i)->getDistance(getClosestEnemy(*i)) <= maxThreatRange) && !(*i)->isMoving())// && (Broodwar->getFrameCount() % 24 == 0))
+			{
+				(*i)->move(rallyPoint, false);
+			}
 		}
 	}
 }

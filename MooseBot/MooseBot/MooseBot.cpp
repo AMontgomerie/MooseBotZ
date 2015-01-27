@@ -89,18 +89,24 @@ void MooseBot::onFrame()
 	}
 
 	bool foundThreat = false;
+	BWAPI::Unit* closestBase = NULL;
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
 		if((*i)->getType().isResourceDepot())
 		{
-			if(((armyManager.getClosestEnemy(*i) != NULL) && (armyManager.getClosestEnemy(*i) != NULL)) &&
+			if((armyManager.getClosestEnemy(*i) != NULL) &&
 				(armyManager.getClosestEnemy(*i)->getDistance(*i) < armyManager.getClosestEnemy(*i)->getDistance(scoutManager.getClosestEnemyBase(*i))))
 			{
 				productionManager.underThreat(true);
 				foundThreat = true;
 			}
+			if((closestBase == NULL) || ((*i)->getDistance(scoutManager.getClosestEnemyBase(*i)) < closestBase->getDistance(scoutManager.getClosestEnemyBase(*i))))
+			{
+				closestBase = (*i);
+			}
 		}
 	}
+	armyManager.setRallyPoint(closestBase->getRegion()->getCenter());
 	if(!foundThreat)
 	{
 		productionManager.underThreat(false);
@@ -139,12 +145,12 @@ void MooseBot::onFrame()
 		//if we have a choke facing towards the enemy base then rally units to there
 		if((scoutManager.getEnemyBase() != Position(0,0)) && (scoutManager.getEnemyBase() != NULL) && (choke->getCenter().getDistance(scoutManager.getEnemyBase()) < home->getCenter().getDistance(scoutManager.getEnemyBase())))
 		{
-			armyManager.setRallyPoint(choke->getCenter());
+		//	armyManager.setRallyPoint(choke->getCenter());
 		}
 		//otherwise rally to the middle of our base
 		else
 		{
-			armyManager.setRallyPoint(home->getCenter());
+		//	armyManager.setRallyPoint(home->getCenter());
 		}
 	}
 
@@ -170,6 +176,10 @@ updates relevant manager whenever a unit is destroyed
 */
 void MooseBot::onUnitDestroy(BWAPI::Unit* unit)
 {
+	if(unit->getType() == BWAPI::UnitTypes::Zerg_Overlord)
+	{
+		productionManager.clearProductionQueue();
+	}
 	if(unit->getPlayer() == Broodwar->self())
 	{
 		if((unit->getType().isWorker()) || (unit->getType().isBuilding()))

@@ -55,6 +55,11 @@ bugs:
 - overlord behaviour is a bit random
 - making too many hatcheries at 1 base and walling in
 	- should take more expansions even vs 1 base opponent
+- building placement
+	- need to make sure we dont build things in stupid places
+	- sunkens at at-risk bases
+	- no massive walls of macro hatches
+	- no tech buildings at the front
 
 extra improvements
 - add ability to get important upgrades outside of scripted build order

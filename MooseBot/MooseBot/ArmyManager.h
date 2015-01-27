@@ -27,6 +27,7 @@ class ArmyManager
 	std::set<BWAPI::Unit*> regroupingUnits;
 	std::set<BWAPI::Unit*> visibleEnemies;
 	std::set<BWAPI::Unit*> combatWorkers;
+	BWAPI::Unit* leadMuta;
 	BWAPI::Position attackPosition;
 	BWAPI::Position mutaAttackPosition;
 	BWAPI::Position defendPosition;
