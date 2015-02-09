@@ -107,6 +107,7 @@ void MooseBot::onFrame()
 		}
 	}
 	armyManager.setRallyPoint(closestBase->getRegion()->getCenter());
+	productionManager.setCentre(closestBase->getTilePosition());
 	if(!foundThreat)
 	{
 		productionManager.underThreat(false);

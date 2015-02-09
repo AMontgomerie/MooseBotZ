@@ -16,12 +16,15 @@ ProductionManager::ProductionManager()
 	lastProductionFrame = 0;
 	lastExpansionFrame = 0;
 	currentThreat = false;
+	homeBase = NULL;
 
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
 		if((*i)->getType().isResourceDepot())
 		{
 			workerManager.addExpansion(*i);
+			homeBase = (*i);
+
 		}
 	}
 }
@@ -563,12 +566,35 @@ std::set<BWAPI::Unit*> ProductionManager::getAllLarvae()
 }
 
 /*
+determines where the building should be built
+*/
+BWAPI::TilePosition ProductionManager::determineBuildPosition(BWAPI::UnitType structureType)
+{
+	//defensive structures
+	if(structureType == BWAPI::UnitTypes::Zerg_Creep_Colony)
+	{
+		return centre;
+	}
+	//macro hatch
+//	else if(structureType == BWAPI::UnitTypes::Zerg_Hatchery)
+//	{
+		//
+//	}
+	//tech structures
+	else
+	{
+		return homeBase->getTilePosition();
+	}
+
+}
+
+/*
 creates the building type specified in the build order item
 */
 void ProductionManager::createBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 {
 	BWAPI::TilePosition buildPosition;
-
+/*
 	//if we have analyzed the map then we will set the buildPosition at the centre of our region, otherwise it will be set to our main base
 	if(centre != TilePosition(0,0))
 	{
@@ -585,6 +611,8 @@ void ProductionManager::createBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 			}
 		}
 	}
+*/
+	buildPosition = determineBuildPosition(element.metaType.unitType);
 
 	//check that we can afford to build the new structure
 	if((Broodwar->self()->minerals() >= element.metaType.mineralPrice()) && (Broodwar->self()->gas() >= element.metaType.gasPrice()))

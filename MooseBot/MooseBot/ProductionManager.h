@@ -34,6 +34,7 @@ class ProductionManager
 	BWAPI::TilePosition					centre;
 	int									lastProductionFrame;
 	int									lastExpansionFrame;
+	BWAPI::Unit*						homeBase;
 
 	std::vector< std::pair<MetaType, int> > goal;
 public:
@@ -76,4 +77,5 @@ private:
 	bool ProductionManager::isTechBuilding(BuildOrderItem<PRIORITY_TYPE> element);
 	BWAPI::Unit* ProductionManager::getUncompletedBuilding(BWAPI::UnitType buildingType);
 	std::set<BWAPI::Unit*> ProductionManager::getAllLarvae();
+	BWAPI::TilePosition ProductionManager::determineBuildPosition(BWAPI::UnitType structureType);
 };

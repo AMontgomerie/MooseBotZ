@@ -18,9 +18,7 @@ ArmyManager::ArmyManager(void) : armyStatus(scout),
 								regroupFrame(0),
 								rallyPoint(Position(0,0)),
 								attackIssued(false),
-								retreatIssued(false),
-								leadMuta(NULL)
-					
+								retreatIssued(false)
 {
 	srand((unsigned int)time(NULL));
 }
@@ -213,6 +211,27 @@ BWAPI::Unit* ArmyManager::getClosestEnemy(BWAPI::Position position)
 	return closestEnemy;
 }
 
+BWAPI::Unit* ArmyManager::getClosestEnemyMuta(BWAPI::Unit* unit)
+{
+	BWAPI::Unit* closestEnemy = NULL;
+
+//	for(std::set<Unit*>::const_iterator i = Broodwar->enemy()->getUnits().begin(); i != Broodwar->enemy()->getUnits().end(); i++)
+	for(std::set<Unit*>::const_iterator i = visibleEnemies.begin(); i != visibleEnemies.end(); i++)
+	{
+		//find an enemy who...
+		if ((closestEnemy == NULL || unit->getDistance(*i) < unit->getDistance(closestEnemy))	//is closer than previous enemies we have checked
+			&& (*i)->isVisible()	//we can see
+			&& ((*i)->getType() != BWAPI::UnitTypes::Zerg_Egg)
+			&& !(((*i)->isBurrowed() || (*i)->isCloaked()) && !haveDetection()))				//if they are cloaked or burrowed then only target them if we have detection with our army
+		closestEnemy = (*i);
+	}
+	if (closestEnemy == NULL)
+	{
+		//Broodwar->printf("ArmyManager Error: no enemies found");
+	}
+	return closestEnemy;
+}
+
 /*
 add a unit to the army
 */
@@ -227,6 +246,7 @@ void ArmyManager::addUnit(BWAPI::Unit* unit)
 	else
 	{
 		mutas.insert(unit);
+	//	mainArmy.insert(unit);
 	}
 	if(rallyPoint != Position(0,0))
 	{
@@ -246,10 +266,6 @@ remove a unit from the army
 */
 void ArmyManager::removeUnit(BWAPI::Unit* unit)
 {
-	if(unit == leadMuta)
-	{
-		leadMuta = NULL;
-	}
 	for(std::set<std::pair<Unit*, int>>::const_iterator i=allArmy.begin();i!=allArmy.end();i++)
 	{
 		if((*i).first == unit)
@@ -262,6 +278,7 @@ void ArmyManager::removeUnit(BWAPI::Unit* unit)
 			else
 			{
 				mutas.erase(unit);
+				//mainArmy.erase(unit);
 			}
 			break;
 		}
@@ -993,63 +1010,266 @@ bool ArmyManager::haveDetection()
 
 void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 {
+
 	for(std::set<Unit*>::const_iterator i=mutas.begin();i!=mutas.end();i++)
 	{
 		int threatSupply = 0;
-		int maxThreatRange = 0;
-
-		if(leadMuta == NULL)
+		for(std::set<Unit*>::const_iterator e = visibleEnemies.begin(); e != visibleEnemies.end(); e++)
 		{
-			leadMuta = (*i);
-		}
-		if(((*i) != leadMuta) && ((*i)->getDistance(leadMuta) > 50))// && (BWAPI::Broodwar->getFrameCount() % 24 == 0))
-		{
-			(*i)->move(leadMuta->getPosition(), false);
-		}
-		else if(((*i) != leadMuta) && (leadMuta->isAttacking()) && ((*i)->getDistance(leadMuta) <= 50))// && (BWAPI::Broodwar->getFrameCount() % 24 == 0))
-		{
-			(*i)->attack(leadMuta->getTarget(), false);
-		}
-		else if((*i) == leadMuta)
-		{
-
-			for(std::set<Unit*>::const_iterator e = visibleEnemies.begin(); e != visibleEnemies.end(); e++)
+			if(((*e)->getType().airWeapon() != NULL) || (*e)->getType().groundWeapon().targetsAir())
 			{
-				if((((*e)->getType().airWeapon() != NULL) || (*e)->getType().groundWeapon().targetsAir()) && ((*i)->getDistance(*e) < 250))
+				if((((*e)->getType().airWeapon().maxRange() * 3) >= (*i)->getDistance(*e)) 
+					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * 3) >= (*i)->getDistance(*e))))
 				{
 					threatSupply += (*e)->getType().supplyRequired();
-					if((*e)->getType().airWeapon().maxRange() > maxThreatRange)
-					{
-					//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().airWeapon().maxRange());
-						maxThreatRange = (*e)->getType().airWeapon().maxRange();
-					}
-					else if((*e)->getType().groundWeapon().targetsAir() && ((*e)->getType().groundWeapon().maxRange() > maxThreatRange))
-					{
-					//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().groundWeapon().maxRange());
-						maxThreatRange = (*e)->getType().groundWeapon().maxRange();
-					}
 				}
 			}
-			//Broodwar->printf("threat range %d", maxThreatRange);
+		}
 
-			int nearbyMutaSupply = 0;
-
-			for(std::set<Unit*>::const_iterator m = mutas.begin(); m != mutas.end(); m++)
+		int nearbyMutaSupply = 0;
+		for(std::set<Unit*>::const_iterator m = mutas.begin(); m != mutas.end(); m++)
+		{
+			if((*i)->getDistance(*m) < 32)
 			{
-				if((*i)->getDistance(*m) < 50)
+				nearbyMutaSupply += BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired();
+			}
+		}
+
+		if((nearbyMutaSupply > (threatSupply * 2)) && !(*i)->isAttacking())
+		{
+			if(getClosestEnemyMuta(*i) != NULL)
+			{
+				(*i)->attack(getClosestEnemyMuta(*i), false);
+			}
+			else
+			{
+				(*i)->attack(attackPosition, false);
+			}
+		}
+		else // if(nearbyMutaSupply <= threatSupply)
+		{
+			(*i)->move(rallyPoint, false);
+		}
+//		else
+//		{
+//			(*i)->attack(attackPosition, false);
+//		}
+
+
+		/*
+		bool moved = false;
+		for(std::set<Unit*>::const_iterator e = visibleEnemies.begin(); e != visibleEnemies.end(); e++)
+		{
+			if(((*e)->getType().airWeapon() != NULL) || (*e)->getType().groundWeapon().targetsAir())
+			{
+				if(((*e)->getType().airWeapon().maxRange() >= (*i)->getDistance(*e) + 32) 
+					|| ((*e)->getType().groundWeapon().targetsAir() && ((*e)->getType().groundWeapon().maxRange() >= (*i)->getDistance(*e) + 32)))
 				{
-					nearbyMutaSupply += BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired();
+					moved = true;
+					int enemyRange = 0;
+					if((*e)->getType().airWeapon() != NULL)
+					{
+						enemyRange = (*e)->getType().airWeapon().maxRange();
+					}
+					else
+					{
+						enemyRange = (*e)->getType().groundWeapon().maxRange();
+					}
+					(*i)->move(moveOutOfRange((*i)->getPosition(), (*e), enemyRange));
 				}
 			}
-
-			if(((nearbyMutaSupply) > threatSupply) && !(*i)->isAttacking())// && (Broodwar->getFrameCount() % 24 == 0))
+		}
+		if(!moved)
+		{
+			if(getClosestEnemyMuta(*i) == NULL)
 			{
-				(*i)->attack(getClosestEnemy(*i), false);
+				(*i)->attack(attackPosition, false);
 			}
-			else if(((*i)->getDistance(getClosestEnemy(*i)) <= maxThreatRange) && !(*i)->isMoving())// && (Broodwar->getFrameCount() % 24 == 0))
+			else
 			{
-				(*i)->move(rallyPoint, false);
+				//(*i)->attack(getClosestEnemyMuta(*i), false);
+				(*i)->attack(attackPosition, false);
+			}
+		}
+		/*
+		int threatSupply = 0;
+		int maxThreatRange = 0;
+
+		for(std::set<Unit*>::const_iterator e = visibleEnemies.begin(); e != visibleEnemies.end(); e++)
+		{
+			if((((*e)->getType().airWeapon() != NULL) || (*e)->getType().groundWeapon().targetsAir()) && ((*i)->getDistance(*e) < 250))
+			{
+				threatSupply += (*e)->getType().supplyRequired();
+				if((*e)->getType().airWeapon().maxRange() > maxThreatRange)
+				{
+				//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().airWeapon().maxRange());
+					maxThreatRange = (*e)->getType().airWeapon().maxRange();
+				}
+				else if((*e)->getType().groundWeapon().targetsAir() && ((*e)->getType().groundWeapon().maxRange() > maxThreatRange))
+				{
+				//	Broodwar->printf("%s has %d range", (*e)->getType().getName().c_str(), (*e)->getType().groundWeapon().maxRange());
+					maxThreatRange = (*e)->getType().groundWeapon().maxRange();
+				}
+			}
+		}
+		//Broodwar->printf("threat range %d", maxThreatRange);
+
+		int nearbyMutaSupply = 0;
+
+		for(std::set<Unit*>::const_iterator m = mutas.begin(); m != mutas.end(); m++)
+		{
+			if((*i)->getDistance(*m) < 50)
+			{
+				nearbyMutaSupply += BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired();
+			}
+		}
+
+		if(((nearbyMutaSupply) > threatSupply) && !(*i)->isAttacking())// && (Broodwar->getFrameCount() % 24 == 0))
+		{
+			(*i)->attack(getClosestEnemy(*i), false);
+		}
+		else if(((*i)->getDistance(getClosestEnemy(*i)) <= maxThreatRange) && !(*i)->isMoving())// && (Broodwar->getFrameCount() % 24 == 0))
+		{
+			(*i)->move(rallyPoint, false);
+		}
+		*/
+	}
+}
+
+BWAPI::Position ArmyManager::moveOutOfRange(BWAPI::Position unitPosition, BWAPI::Unit* enemy, int enemyRange)
+{
+	/*
+	BWAPI::Position targetPosition = unitPosition;
+	BWAPI::Position shiftPositionX(8,0);
+	BWAPI::Position shiftPositionY(0,8);
+
+	if(unitPosition > enemy->getPosition())
+	{
+	}
+	else
+	{
+	}
+	*/
+
+	
+	BWAPI::Position targetPosition = unitPosition;
+	BWAPI::Position tempPositionXPlus = unitPosition, tempPositionXMinus = unitPosition, tempPositionYPlus = unitPosition, tempPositionYMinus = unitPosition;
+	BWAPI::Position shiftPositionX(8,0);
+	BWAPI::Position shiftPositionY(0,8);
+
+	if(unitPosition > enemy->getPosition())
+	{
+		int xCount = 0, yCount = 0;
+		while(tempPositionXMinus.getDistance(enemy->getPosition()) < enemyRange)
+		{
+			tempPositionXMinus -= shiftPositionX;
+			xCount++;
+		}
+		while(tempPositionYMinus.getDistance(enemy->getPosition()) < enemyRange)
+		{
+			tempPositionYMinus -= shiftPositionY;
+			yCount++;
+		}
+		if(xCount < yCount)
+		{
+			for(int i = 0; i <= xCount; i++)
+			{
+				targetPosition -= shiftPositionX;
+			}
+		}
+		else
+		{
+			for(int i = 0; i <= yCount; i++)
+			{
+				targetPosition -= shiftPositionY;
 			}
 		}
 	}
+	else
+	{
+		int xCount = 0, yCount = 0;
+		while(tempPositionXMinus.getDistance(enemy->getPosition()) < enemyRange)
+		{
+			tempPositionXMinus += shiftPositionX;
+			xCount++;
+		}
+		while(tempPositionYMinus.getDistance(enemy->getPosition()) < enemyRange)
+		{
+			tempPositionYMinus += shiftPositionY;
+			yCount++;
+		}
+		if(xCount < yCount)
+		{
+			for(int i = 0; i <= xCount; i++)
+			{
+				targetPosition += shiftPositionX;
+			}
+		}
+		else
+		{
+			for(int i = 0; i <= yCount; i++)
+			{
+				targetPosition += shiftPositionY;
+			}
+		}
+	}
+	/*
+	BWAPI::Position targetPosition = unitPosition;
+	BWAPI::Position tempPositionXPlus = unitPosition, tempPositionXMinus = unitPosition, tempPositionYPlus = unitPosition, tempPositionYMinus = unitPosition;
+	BWAPI::Position shiftPositionX(8,0);
+	BWAPI::Position shiftPositionY(0,8);
+	int xPlusCount = 0, xMinusCount = 0, yPlusCount = 0, yMinusCount = 0;
+
+	while(tempPositionXPlus.getDistance(enemy->getPosition()) < enemyRange)
+	{
+		tempPositionXPlus += shiftPositionX;
+		xPlusCount++;
+	}
+	while(tempPositionXMinus.getDistance(enemy->getPosition()) < enemyRange)
+	{
+		tempPositionXMinus -= shiftPositionX;
+		xMinusCount++;
+	}
+	while(tempPositionYPlus.getDistance(enemy->getPosition()) < enemyRange)
+	{
+		tempPositionYPlus += shiftPositionY;
+		yPlusCount++;
+	}
+	while(tempPositionYMinus.getDistance(enemy->getPosition()) < enemyRange)
+	{
+		tempPositionYMinus -= shiftPositionY;
+		yMinusCount++;
+	}
+
+	if(xPlusCount > xMinusCount)
+	{
+		for(int i = 0; i <= xPlusCount; i++)
+		{
+			targetPosition += shiftPositionX;
+		}
+	}
+	else
+	{
+		for(int i = 0; i <= xMinusCount; i++)
+		{
+			targetPosition -= shiftPositionX;
+		}
+	}
+	if(yPlusCount > yMinusCount)
+	{
+		for(int i = 0; i <= yPlusCount; i++)
+		{
+			targetPosition += shiftPositionY;
+		}
+	}
+	else
+	{
+		for(int i = 0; i <= yMinusCount; i++)
+		{
+			targetPosition -= shiftPositionY;
+		}
+	}
+	*/
+
+	return targetPosition;
 }

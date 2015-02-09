@@ -64,3 +64,15 @@ bugs:
 extra improvements
 - add ability to get important upgrades outside of scripted build order
 	- e.g. when in midgame state, build evos and get 1/1 or something
+
+08/02/15
+- turned off seperate muta control and added them back to main army temporarily while dealing with other issues
+	- //mutas.insert(unit); @ ArmyManager::addUnit();
+	- // mainArmy.erase(unit);@ ArmyManager::removeUnit();
+- turned it back on
+- fixed building placement so tech buildings are always added to main and defensive structures to the closest base to enemy base
+
+- muta micro needs to be changed so mutas continue towards attackposition but make detours to avoid enemy units
+
+09/02/15
+- simplified/improved muta micro so that mutas mostly stay out of range of enemies and attack when no nearby enemies

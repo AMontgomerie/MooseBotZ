@@ -27,7 +27,6 @@ class ArmyManager
 	std::set<BWAPI::Unit*> regroupingUnits;
 	std::set<BWAPI::Unit*> visibleEnemies;
 	std::set<BWAPI::Unit*> combatWorkers;
-	BWAPI::Unit* leadMuta;
 	BWAPI::Position attackPosition;
 	BWAPI::Position mutaAttackPosition;
 	BWAPI::Position defendPosition;
@@ -76,6 +75,7 @@ public:
 	void ArmyManager::mainArmyMove(BWAPI::Position position);
 	void ArmyManager::mainArmyRetreat();
 	void ArmyManager::mutaRetreat();
+	BWAPI::Unit* ArmyManager::getClosestEnemyMuta(BWAPI::Unit* unit);
 
 	enum {scout = 0, retreat = 1, attack = 2, defend = 3};
 
@@ -92,4 +92,5 @@ private:
 	void ArmyManager::kite();
 	bool ArmyManager::haveDetection();
 	void mutaHarass(BWAPI::Position attackPosition);
+	BWAPI::Position moveOutOfRange(BWAPI::Position unitPosition, BWAPI::Unit* enemy, int enemyRange);
 };
