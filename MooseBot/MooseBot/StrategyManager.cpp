@@ -129,6 +129,15 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 		changeState();
 	}
 
+	if((currentState.getTechLevel() == 2) && !lair)
+	{
+		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Lair, 1));
+	}
+	if((currentState.getTechLevel() == 3) && lair && !hive)
+	{
+		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hive, 1));
+	}
+
 	newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 3));
 	//newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hydralisk, 4));
 
@@ -166,6 +175,9 @@ void StrategyManager::update(int techLevel, int armyStatus)
 	int gasCount = 0;
 	this->armyStatus = armyStatus;
 
+	lair = false;
+	hive = false;
+
 	for(std::set<BWAPI::Unit*>::const_iterator i = BWAPI::Broodwar->self()->getUnits().begin(); i != BWAPI::Broodwar->self()->getUnits().end(); i++)
 	{
 		if((*i)->getType().isResourceDepot() || (*i)->getBuildType().isResourceDepot())
@@ -183,10 +195,12 @@ void StrategyManager::update(int techLevel, int armyStatus)
 		if(((*i)->getType() == BWAPI::UnitTypes::Zerg_Lair) || ((*i)->getBuildType() == BWAPI::UnitTypes::Zerg_Lair))
 		{
 			lair = true;
+			//changeState();
 		}
 		if(((*i)->getType() == BWAPI::UnitTypes::Zerg_Hive) || ((*i)->getBuildType() == BWAPI::UnitTypes::Zerg_Hive))
 		{
 			hive = true;
+			//changeState();
 		}
 		if((*i)->getType() == BWAPI::UnitTypes::Zerg_Lair)
 		{

@@ -224,9 +224,20 @@ BWAPI::Unit* ArmyManager::getClosestEnemyMuta(BWAPI::Unit* unit)
 		if ((closestEnemy == NULL || unit->getDistance(*i) < unit->getDistance(closestEnemy))	//is closer than previous enemies we have checked
 			&& (*i)->isVisible()	//we can see
 			&& ((*i)->getType() != BWAPI::UnitTypes::Zerg_Egg)
+			&& ((*i)->getType() != BWAPI::UnitTypes::Zerg_Larva)
 			&& !(((*i)->isBurrowed() || (*i)->isCloaked()) && !haveDetection()))				//if they are cloaked or burrowed then only target them if we have detection with our army
 		{
 			closestEnemy = (*i);
+		}
+	}
+	if((getClosestEnemyBuilding(unit) != NULL) && ((unit->getDistance(getClosestEnemyBuilding(unit)) < unit->getDistance(closestEnemy)) || (closestEnemy == NULL)))
+	{
+		if((getClosestEnemyBuilding(unit)->getType() == BWAPI::UnitTypes::Zerg_Spore_Colony) 
+			|| (getClosestEnemyBuilding(unit)->getType() == BWAPI::UnitTypes::Protoss_Photon_Cannon) 
+			|| (getClosestEnemyBuilding(unit)->getType() == BWAPI::UnitTypes::Terran_Missile_Turret)
+			|| (getClosestEnemyBuilding(unit)->getType() == BWAPI::UnitTypes::Terran_Bunker))
+		{
+			closestEnemy = getClosestEnemyBuilding(unit);
 		}
 	}
 	if (closestEnemy == NULL)
@@ -1050,16 +1061,24 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 				}
 			}
 		}
-		for(std::set<Unit*>::const_iterator e = BWAPI::Broodwar->getAllUnits().begin(); e != BWAPI::Broodwar->getAllUnits().end(); e++)
+		for(std::set<Unit*>::const_iterator e = BWAPI::Broodwar->enemy()->getUnits().begin(); e != BWAPI::Broodwar->enemy()->getUnits().end(); e++)
 		{
-			if(((*e)->getPlayer() != BWAPI::Broodwar->self()) 
-				&& (*e)->getType().isBuilding() 
-				&& ((*e)->getType().canAttack() || ((*e)->getType() == BWAPI::UnitTypes::Terran_Bunker)))
+			if(((*e)->getType() == BWAPI::UnitTypes::Zerg_Spore_Colony) 
+				|| ((*e)->getType() == BWAPI::UnitTypes::Protoss_Photon_Cannon) 
+				|| ((*e)->getType() == BWAPI::UnitTypes::Terran_Missile_Turret)
+				|| ((*e)->getType() == BWAPI::UnitTypes::Terran_Bunker))
 			{
-				if((((*e)->getType().airWeapon().maxRange() * 2) >= (*i)->getDistance(*e)) 
-					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * 2) >= (*i)->getDistance(*e))))
+				if((*e)->getType() == BWAPI::UnitTypes::Terran_Bunker)
 				{
-					threatSupply += (*e)->getType().supplyRequired();
+					if((BWAPI::UnitTypes::Terran_Marine.groundWeapon().maxRange() * 2.5) >= (*i)->getDistance(*e))
+					{
+						threatSupply += 8;
+					}
+				}
+				else if((((*e)->getType().airWeapon().maxRange() * 2.5) >= (*i)->getDistance(*e)) 
+					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * 2.5) >= (*i)->getDistance(*e))))
+				{
+					threatSupply += 8;
 				}
 			}
 		}
