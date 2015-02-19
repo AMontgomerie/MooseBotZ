@@ -202,7 +202,9 @@ BWAPI::Unit* ArmyManager::getClosestEnemy(BWAPI::Position position)
 	for(std::set<Unit*>::const_iterator i = Broodwar->enemy()->getUnits().begin(); i != Broodwar->enemy()->getUnits().end(); i++)
 	{
 		if ((closestEnemy == NULL || position.getDistance((*i)->getPosition()) < position.getDistance(closestEnemy->getPosition())) && (*i)->isVisible())
-		closestEnemy = (*i);
+		{
+			closestEnemy = (*i);
+		}
 	}
 	if (closestEnemy == NULL)
 	{
@@ -223,6 +225,29 @@ BWAPI::Unit* ArmyManager::getClosestEnemyMuta(BWAPI::Unit* unit)
 			&& (*i)->isVisible()	//we can see
 			&& ((*i)->getType() != BWAPI::UnitTypes::Zerg_Egg)
 			&& !(((*i)->isBurrowed() || (*i)->isCloaked()) && !haveDetection()))				//if they are cloaked or burrowed then only target them if we have detection with our army
+		{
+			closestEnemy = (*i);
+		}
+	}
+	if (closestEnemy == NULL)
+	{
+		//Broodwar->printf("ArmyManager Error: no enemies found");
+	}
+	return closestEnemy;
+}
+
+BWAPI::Unit* ArmyManager::getClosestEnemyBuilding(BWAPI::Unit* unit)
+{
+	BWAPI::Unit* closestEnemy = NULL;
+
+//	for(std::set<Unit*>::const_iterator i = Broodwar->enemy()->getUnits().begin(); i != Broodwar->enemy()->getUnits().end(); i++)
+	for(std::set<Unit*>::const_iterator i = BWAPI::Broodwar->enemy()->getUnits().begin(); i != BWAPI::Broodwar->enemy()->getUnits().end(); i++)
+	{
+		//find an enemy who...
+		if ((closestEnemy == NULL || unit->getDistance(*i) < unit->getDistance(closestEnemy))	//is closer than previous enemies we have checked														//can attack (so we prioritise fighting units over workers or buildings
+			&& (*i)->isVisible()																//we can see
+			&& !(((*i)->isBurrowed() || (*i)->isCloaked()) && !haveDetection())
+			&& (*i)->getType().isBuilding())				//if they are cloaked or burrowed then only target them if we have detection with our army
 		closestEnemy = (*i);
 	}
 	if (closestEnemy == NULL)
@@ -1025,6 +1050,19 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 				}
 			}
 		}
+		for(std::set<Unit*>::const_iterator e = BWAPI::Broodwar->getAllUnits().begin(); e != BWAPI::Broodwar->getAllUnits().end(); e++)
+		{
+			if(((*e)->getPlayer() != BWAPI::Broodwar->self()) 
+				&& (*e)->getType().isBuilding() 
+				&& ((*e)->getType().canAttack() || ((*e)->getType() == BWAPI::UnitTypes::Terran_Bunker)))
+			{
+				if((((*e)->getType().airWeapon().maxRange() * 2) >= (*i)->getDistance(*e)) 
+					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * 2) >= (*i)->getDistance(*e))))
+				{
+					threatSupply += (*e)->getType().supplyRequired();
+				}
+			}
+		}
 
 		int nearbyMutaSupply = 0;
 		for(std::set<Unit*>::const_iterator m = mutas.begin(); m != mutas.end(); m++)
@@ -1040,6 +1078,14 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 			if(getClosestEnemyMuta(*i) != NULL)
 			{
 				(*i)->attack(getClosestEnemyMuta(*i), false);
+			}
+			else if(getClosestEnemy(*i) != NULL)
+			{
+				(*i)->attack(getClosestEnemy(*i), false);
+			}
+			else if(getClosestEnemyBuilding(*i) != NULL)
+			{
+				(*i)->attack(getClosestEnemyBuilding(*i), false);
 			}
 			else
 			{

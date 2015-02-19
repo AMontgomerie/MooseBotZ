@@ -17,6 +17,7 @@ ProductionManager::ProductionManager()
 	lastExpansionFrame = 0;
 	currentThreat = false;
 	homeBase = NULL;
+	techLevel = 1;
 
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
@@ -936,4 +937,10 @@ void ProductionManager::setExpansionStatus(bool status)
 void ProductionManager::updateBuildOrderGenTechLevel(int techLevel)
 {
 	buildOrderGenerator.setTechLevel(techLevel);
+	this->techLevel = techLevel;
+}
+
+int ProductionManager::getCurrentTechLevel()
+{
+	return techLevel;
 }

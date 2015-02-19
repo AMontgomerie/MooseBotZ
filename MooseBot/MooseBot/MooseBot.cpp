@@ -66,13 +66,33 @@ void MooseBot::onFrame()
 
 	//if we have more bases than our opponent then we don't need to keep expanding
 	//this will trigger zerg to build additional macro hatcheries instead
-	if((hatcheryCount > scoutManager.getEnemyMiningBaseCount()))
+
+	switch(productionManager.getCurrentTechLevel())
 	{
-		productionManager.setExpansionStatus(false);
-	}
-	else
-	{
-		productionManager.setExpansionStatus(true);
+	case 1:
+		if(hatcheryCount > scoutManager.getEnemyMiningBaseCount())
+		{
+			productionManager.setExpansionStatus(false);
+		}
+		else
+		{
+			productionManager.setExpansionStatus(true);
+		}
+		break;
+	case 2:
+		if(hatcheryCount > scoutManager.getEnemyMiningBaseCount() + 1)
+		{
+			productionManager.setExpansionStatus(false);
+		}
+		else
+		{
+			productionManager.setExpansionStatus(true);
+		}
+		break;
+	case 3:
+	default:
+			productionManager.setExpansionStatus(true);
+		break;
 	}
 
 	productionManager.update(armyManager.getArmyStatus());

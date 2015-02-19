@@ -76,6 +76,7 @@ public:
 	void ArmyManager::mainArmyRetreat();
 	void ArmyManager::mutaRetreat();
 	BWAPI::Unit* ArmyManager::getClosestEnemyMuta(BWAPI::Unit* unit);
+	BWAPI::Unit* ArmyManager::getClosestEnemyBuilding(BWAPI::Unit* unit);
 
 	enum {scout = 0, retreat = 1, attack = 2, defend = 3};
 

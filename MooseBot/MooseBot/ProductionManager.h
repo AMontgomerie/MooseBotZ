@@ -34,6 +34,7 @@ class ProductionManager
 	BWAPI::TilePosition					centre;
 	int									lastProductionFrame;
 	int									lastExpansionFrame;
+	int techLevel;
 	BWAPI::Unit*						homeBase;
 
 	std::vector< std::pair<MetaType, int> > goal;
@@ -62,6 +63,7 @@ public:
 	void ProductionManager::setExpansionStatus(bool status);
 	void ProductionManager::underThreat(bool newThreat);
 	void ProductionManager::updateBuildOrderGenTechLevel(int techLevel);
+	int ProductionManager::getCurrentTechLevel();
 private:
 	void ProductionManager::createUnit(BuildOrderItem<PRIORITY_TYPE> element);
 	void ProductionManager::createAddon(BuildOrderItem<PRIORITY_TYPE> element);

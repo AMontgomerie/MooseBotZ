@@ -153,6 +153,7 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 	case 3:
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 4));
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Ultralisk, 3));
+		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Mutalisk, 1));
 	}
 
 	return newGoal;
