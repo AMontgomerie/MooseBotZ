@@ -14,7 +14,6 @@ ScoutManager::ScoutManager(void)
 	enemyCloak = false;
 	enemyArmySupply = 0;
 	enemyBaseCount = 0;
-	enemyStaticD = 0;
 }
 
 /*
@@ -177,6 +176,13 @@ adds a discovered enemy unit to the set of known enemy units
 */
 void ScoutManager::addEnemyUnit(BWAPI::Unit* unit)
 {
+	for(std::set<std::pair<BWAPI::Unit*, BWAPI::UnitType>>::const_iterator i = knownEnemyUnits.begin(); i != knownEnemyUnits.end(); i++)
+	{
+		if((*i).first == unit)
+		{
+			return;
+		}
+	}
 	knownEnemyUnits.insert(std::make_pair(unit, unit->getType()));
 }
 
@@ -274,26 +280,39 @@ int ScoutManager::getEnemyArmySupply()
 	return enemyArmySupply;
 }
 
-void ScoutManager::addEnemyStaticD()
+void ScoutManager::addEnemyStaticD(BWAPI::Unit* unit)
 {
-	enemyStaticD++;
+	for(std::set<std::pair<BWAPI::Unit*, BWAPI::UnitType>>::const_iterator i = enemyStaticD.begin(); i != enemyStaticD.end(); i++)
+	{
+		if((*i).first == unit)
+		{
+			return;
+		}
+	}
+	enemyStaticD.insert(std::make_pair(unit, unit->getType()));
 }
 
-void ScoutManager::removeEnemyStaticD()
+void ScoutManager::removeEnemyStaticD(BWAPI::Unit* unit)
 {
-	if(enemyStaticD > 0)
+	for(std::set<std::pair<BWAPI::Unit*, BWAPI::UnitType>>::const_iterator i = enemyStaticD.begin(); i != enemyStaticD.end(); i++)
 	{
-		enemyStaticD--;
-	}
-	else
-	{
-		Broodwar->printf("ScoutManager Error: cannot remove static defence because count is already at zero");
+		if(i->first == unit)
+		{
+			enemyStaticD.erase(*i);
+			break;
+		}
 	}
 }
 
 int ScoutManager::getTotalEnemyStaticD()
 {
-	return enemyStaticD;
+	int enemyStaticDCount = 0;
+
+	for(std::set<std::pair<BWAPI::Unit*, BWAPI::UnitType>>::const_iterator i = enemyStaticD.begin(); i != enemyStaticD.end(); i++)
+	{
+		enemyStaticDCount++;
+	}
+	return enemyStaticDCount;
 }
 
 void ScoutManager::scoutExpos()

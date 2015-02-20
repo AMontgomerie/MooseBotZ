@@ -147,7 +147,7 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 		if(threatStatus)
 		{
 			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
-			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 2));
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 4));
 
 		}
 		break;
@@ -155,12 +155,12 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 		if(threatStatus)
 		{
 			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
-			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 3));
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 8));
 		}
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Mutalisk, 4));
 		break;
 	case 3:
-		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 4));
+		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 12));
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Ultralisk, 3));
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Mutalisk, 1));
 	}

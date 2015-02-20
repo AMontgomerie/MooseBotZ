@@ -94,4 +94,5 @@ private:
 	bool ArmyManager::haveDetection();
 	void mutaHarass(BWAPI::Position attackPosition);
 	BWAPI::Position moveOutOfRange(BWAPI::Position unitPosition, BWAPI::Unit* enemy, int enemyRange);
+	bool surrounded(BWAPI::Unit* muta);
 };

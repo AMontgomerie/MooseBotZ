@@ -52,7 +52,7 @@ void MooseBot::onFrame()
 	timer.start();
 
 	armyManager.setAttackPosition(scoutManager.getEnemyBase()); 
-	armyManager.setEnemyArmySupply(scoutManager.getEnemyArmySupply() + (scoutManager.getTotalEnemyStaticD() * 2)); //enemy army supply + (number of static defence * 4) 
+	armyManager.setEnemyArmySupply(scoutManager.getEnemyArmySupply() + (scoutManager.getTotalEnemyStaticD() * 8)); //enemy army supply + (number of static defence * 8) 
 
 	int hatcheryCount = 0;
 
@@ -64,7 +64,7 @@ void MooseBot::onFrame()
 		}
 	}
 
-	//if we have more bases than our opponent then we don't need to keep expanding
+	//if we have more bases than our opponent then we don't necessarily need to keep expanding
 	//this will trigger zerg to build additional macro hatcheries instead
 
 	switch(productionManager.getCurrentTechLevel())
@@ -80,13 +80,27 @@ void MooseBot::onFrame()
 		}
 		break;
 	case 2:
-		if(hatcheryCount > scoutManager.getEnemyMiningBaseCount() + 1)
+		if((armyManager.getArmySupply() > scoutManager.getEnemyArmySupply()) || (scoutManager.getEnemyMiningBaseCount() > 2))
 		{
-			productionManager.setExpansionStatus(false);
+			if(hatcheryCount > scoutManager.getEnemyMiningBaseCount() + 1)
+			{
+				productionManager.setExpansionStatus(false);
+			}
+			else
+			{
+				productionManager.setExpansionStatus(true);
+			}
 		}
 		else
 		{
-			productionManager.setExpansionStatus(true);
+			if(hatcheryCount > scoutManager.getEnemyMiningBaseCount())
+			{
+				productionManager.setExpansionStatus(false);
+			}
+			else
+			{
+				productionManager.setExpansionStatus(true);
+			}
 		}
 		break;
 	case 3:
@@ -197,12 +211,12 @@ updates relevant manager whenever a unit is destroyed
 */
 void MooseBot::onUnitDestroy(BWAPI::Unit* unit)
 {
-	if(unit->getType() == BWAPI::UnitTypes::Zerg_Overlord)
-	{
-		productionManager.clearProductionQueue();
-	}
 	if(unit->getPlayer() == Broodwar->self())
 	{
+		if(unit->getType() == BWAPI::UnitTypes::Zerg_Overlord)
+		{
+			productionManager.clearProductionQueue();
+		}
 		if((unit->getType().isWorker()) || (unit->getType().isBuilding()))
 		{
 			productionManager.removeUnit(unit);
@@ -217,9 +231,11 @@ void MooseBot::onUnitDestroy(BWAPI::Unit* unit)
 		if(unit->getType().isBuilding())
 		{
 			scoutManager.removeEnemyBase(unit);
-			if(unit->getType().canAttack() || (unit->getType() == BWAPI::UnitTypes::Terran_Bunker))
+			if((unit->getType() == BWAPI::UnitTypes::Protoss_Photon_Cannon)
+				|| (unit->getType() == BWAPI::UnitTypes::Terran_Bunker)
+				|| (unit->getType() == BWAPI::UnitTypes::Zerg_Sunken_Colony))
 			{
-				scoutManager.removeEnemyStaticD();
+				scoutManager.removeEnemyStaticD(unit);
 			}
 		}
 		scoutManager.removeEnemyUnit(unit);
@@ -373,20 +389,22 @@ updates relevent manager whenever a new unit is shown
 */
 void MooseBot::onUnitShow(BWAPI::Unit* unit)
 {
-	if(unit->getPlayer()->isEnemy(Broodwar->self()) && !unit->getType().isBuilding())
+	if((unit->getPlayer() == Broodwar->enemy()) && !unit->getType().isBuilding())
 	{
 		armyManager.addEnemy(unit);
 	}
-	if((unit->getPlayer()->isEnemy(Broodwar->self())) && (unit->getType().isBuilding()))
+	if((unit->getPlayer() == Broodwar->enemy()) && (unit->getType().isBuilding()))
 	{
 		scoutManager.addEnemyBase(unit);
-		if(unit->getType().canAttack() || (unit->getType() == BWAPI::UnitTypes::Terran_Bunker))
+		if((unit->getType() == BWAPI::UnitTypes::Protoss_Photon_Cannon)
+			|| (unit->getType() == BWAPI::UnitTypes::Terran_Bunker)
+			|| (unit->getType() == BWAPI::UnitTypes::Zerg_Sunken_Colony))
 		{
-			scoutManager.addEnemyStaticD();
+			scoutManager.addEnemyStaticD(unit);
 		}
 	}
-	else if(unit->getPlayer()->isEnemy(Broodwar->self()) 
-		&& (!unit->getType().isWorker())
+	else if((unit->getPlayer() == Broodwar->enemy()) 
+		&& !unit->getType().isWorker()
 		&& !(unit->getType() == BWAPI::UnitTypes::Zerg_Overlord)
 		&& !(unit->getType() == BWAPI::UnitTypes::Zerg_Egg)
 		&& !(unit->getType() == BWAPI::UnitTypes::Zerg_Larva))

@@ -43,6 +43,7 @@ void ArmyManager::update()
 	{
 		mutaHarass(attackPosition);
 	}
+	//BWAPI::Broodwar->printf("Us: %d, Them: %d", getArmySupply(), enemyArmySupply);
 }
 
 /*
@@ -216,6 +217,7 @@ BWAPI::Unit* ArmyManager::getClosestEnemy(BWAPI::Position position)
 BWAPI::Unit* ArmyManager::getClosestEnemyMuta(BWAPI::Unit* unit)
 {
 	BWAPI::Unit* closestEnemy = NULL;
+	//closestEnemy = getClosestEnemy(unit);
 
 //	for(std::set<Unit*>::const_iterator i = Broodwar->enemy()->getUnits().begin(); i != Broodwar->enemy()->getUnits().end(); i++)
 	for(std::set<Unit*>::const_iterator i = visibleEnemies.begin(); i != visibleEnemies.end(); i++)
@@ -223,8 +225,10 @@ BWAPI::Unit* ArmyManager::getClosestEnemyMuta(BWAPI::Unit* unit)
 		//find an enemy who...
 		if ((closestEnemy == NULL || unit->getDistance(*i) < unit->getDistance(closestEnemy))	//is closer than previous enemies we have checked
 			&& (*i)->isVisible()	//we can see
+			&& (*i)->getType().canAttack()
 			&& ((*i)->getType() != BWAPI::UnitTypes::Zerg_Egg)
 			&& ((*i)->getType() != BWAPI::UnitTypes::Zerg_Larva)
+			&& ((*i)->getType().groundWeapon().targetsAir() || ((*i)->getType().airWeapon() != NULL))
 			&& !(((*i)->isBurrowed() || (*i)->isCloaked()) && !haveDetection()))				//if they are cloaked or burrowed then only target them if we have detection with our army
 		{
 			closestEnemy = (*i);
@@ -244,6 +248,7 @@ BWAPI::Unit* ArmyManager::getClosestEnemyMuta(BWAPI::Unit* unit)
 	{
 		//Broodwar->printf("ArmyManager Error: no enemies found");
 	}
+
 	return closestEnemy;
 }
 
@@ -1070,13 +1075,13 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 			{
 				if((*e)->getType() == BWAPI::UnitTypes::Terran_Bunker)
 				{
-					if((BWAPI::UnitTypes::Terran_Marine.groundWeapon().maxRange() * 2.5) >= (*i)->getDistance(*e))
+					if((BWAPI::UnitTypes::Terran_Marine.groundWeapon().maxRange() * 3) >= (*i)->getDistance(*e))
 					{
 						threatSupply += 8;
 					}
 				}
-				else if((((*e)->getType().airWeapon().maxRange() * 2.5) >= (*i)->getDistance(*e)) 
-					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * 2.5) >= (*i)->getDistance(*e))))
+				else if((((*e)->getType().airWeapon().maxRange() * 3) >= (*i)->getDistance(*e)) 
+					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * 3) >= (*i)->getDistance(*e))))
 				{
 					threatSupply += 8;
 				}
@@ -1086,14 +1091,43 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 		int nearbyMutaSupply = 0;
 		for(std::set<Unit*>::const_iterator m = mutas.begin(); m != mutas.end(); m++)
 		{
-			if((*i)->getDistance(*m) < 32)
+			if(((*i)->getDistance(*m) < 64) && ((*i)->getHitPoints() > 24))
 			{
 				nearbyMutaSupply += BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired();
 			}
 		}
 
-		if((nearbyMutaSupply > (threatSupply * 2)) && !(*i)->isAttacking())
+		if((nearbyMutaSupply > (threatSupply * 2)) && !(*i)->isAttacking() && ((*i)->getHitPoints() > 24))
 		{
+			/*
+			BWAPI::Unit* target = getClosestEnemyMuta(*i);
+			
+			if((target == NULL) || ((getClosestEnemy(*i) != NULL) && (getClosestEnemy(*i)->getDistance(*i) < target->getDistance(*i))))
+			{
+				target = getClosestEnemy(*i);
+			}
+			if((target != NULL))
+			{
+				if(((target->getType().airWeapon().maxRange() * 2) >= (*i)->getDistance(target)) 
+					|| (target->getType().groundWeapon().targetsAir() && ((target->getType().groundWeapon().maxRange() * 2) >= (*i)->getDistance(target))))
+				{					
+				}
+				else
+				{
+					target = getClosestEnemyBuilding(*i);
+				}
+			}
+			if(target != NULL)
+			{
+				(*i)->attack(target, false);
+			}
+			else
+			{
+				(*i)->attack(attackPosition, false);
+			}
+			*/
+
+			
 			if(getClosestEnemyMuta(*i) != NULL)
 			{
 				(*i)->attack(getClosestEnemyMuta(*i), false);
@@ -1110,10 +1144,39 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 			{
 				(*i)->attack(attackPosition, false);
 			}
+			
 		}
 		else // if(nearbyMutaSupply <= threatSupply)
-		{
-			(*i)->move(rallyPoint, false);
+		{			
+			BWAPI::Position position = (*i)->getPosition();
+			BWAPI::Position xModifier(64,0);
+			BWAPI::Position yModifier(0,64);
+
+			if((getClosestEnemyMuta(*i) != NULL) && !surrounded(*i))
+			{
+				if((*i)->getPosition().x() > getClosestEnemyMuta(*i)->getPosition().x())
+				{
+					position += xModifier;
+				}
+				else if((*i)->getPosition().x() < getClosestEnemyMuta(*i)->getPosition().x())
+				{
+					position -= xModifier;
+				}
+				if((*i)->getPosition().y() > getClosestEnemyMuta(*i)->getPosition().y())
+				{
+					position += yModifier;
+				}
+				else if((*i)->getPosition().y() < getClosestEnemyMuta(*i)->getPosition().y())
+				{
+					position -= yModifier;
+				}
+				(*i)->move(position, false);
+			}
+			else
+			{
+				(*i)->move(rallyPoint, false);
+			}
+			
 		}
 //		else
 //		{
@@ -1198,6 +1261,77 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 			(*i)->move(rallyPoint, false);
 		}
 		*/
+	}
+}
+
+bool ArmyManager::surrounded(BWAPI::Unit* muta)
+{
+	int directionsBlocked = 0;
+	bool xPyP = false, xPyM = false, xMyP = false, xMyM = false;
+
+	for(std::set<Unit*>::const_iterator e = visibleEnemies.begin(); e != visibleEnemies.end(); e++)
+	{
+		bool xPlus = false, xMinus = false, yPlus = false, yMinus = false;
+
+		if(((*e)->getType().airWeapon() != NULL) || (*e)->getType().groundWeapon().targetsAir())
+		{
+			if((((*e)->getType().airWeapon().maxRange() * 2) >= (muta)->getDistance(*e)) 
+				|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * 2) >= (muta)->getDistance(*e))))
+			{
+				if((muta)->getPosition().x() > (*e)->getPosition().x())
+				{
+					xPlus = true;
+				}
+				else if((muta)->getPosition().x() < (*e)->getPosition().x())
+				{
+					xMinus = true;
+				}
+				if((muta)->getPosition().y() > (*e)->getPosition().y())
+				{
+					yPlus = true;
+				}
+				else if((muta)->getPosition().y() < (*e)->getPosition().y())
+				{
+					yMinus = true;
+				}
+			}
+
+			if(xPlus && yPlus && !xPyP)
+			{
+				xPyP = true;
+				directionsBlocked++;
+			}
+			else if(xPlus && yMinus && !xPyM)
+			{
+				xPyM = true;
+				directionsBlocked++;
+			}
+			else if(xMinus && yPlus && !xMyP)
+			{
+				xMyP = true;
+				directionsBlocked++;
+			}
+			else if(xMinus && yMinus && !xMyM)
+			{
+				xMyM = true;
+				directionsBlocked++;
+			}
+			else
+			{
+			//	BWAPI::Broodwar->printf("bruh");
+			}
+		}
+	}
+
+	//BWAPI::Broodwar->printf("%d directions blocked", directionsBlocked);
+
+	if(directionsBlocked > 1)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 

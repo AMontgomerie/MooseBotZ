@@ -139,7 +139,7 @@ std::vector<MetaType> BuildOrderGenerator::createMoreSupply(std::vector<MetaType
 std::vector<MetaType> BuildOrderGenerator::getOpeningBuildOrder()
 {
 	std::vector<MetaType> buildOrder;
-
+	
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
@@ -154,6 +154,7 @@ std::vector<MetaType> BuildOrderGenerator::getOpeningBuildOrder()
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hatchery));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Metabolic_Boost));
@@ -165,13 +166,17 @@ std::vector<MetaType> BuildOrderGenerator::getOpeningBuildOrder()
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Spire));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Creep_Colony));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Sunken_Colony));
 	buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Pneumatized_Carapace));
-
+	
 	/*
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
