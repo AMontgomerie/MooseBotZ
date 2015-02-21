@@ -18,7 +18,8 @@ ArmyManager::ArmyManager(void) : armyStatus(scout),
 								regroupFrame(0),
 								rallyPoint(Position(0,0)),
 								attackIssued(false),
-								retreatIssued(false)
+								retreatIssued(false),
+								analysed(false)
 {
 	srand((unsigned int)time(NULL));
 }
@@ -30,6 +31,7 @@ void ArmyManager::update()
 {
 	updateStatus();
 	drawArmyStatus(320, 10);
+	updateOverlords();
 
 	if((armyStatus == attack) && (Broodwar->getFrameCount() % 24 == 0))
 	{
@@ -44,6 +46,101 @@ void ArmyManager::update()
 		mutaHarass(attackPosition);
 	}
 	//BWAPI::Broodwar->printf("Us: %d, Them: %d", getArmySupply(), enemyArmySupply);
+}
+
+void ArmyManager::analysisFinished()
+{
+	analysed = true;
+}
+
+void ArmyManager::updateOverlords()
+{
+	
+	if(analysed)
+	{
+		//make sure we have all the bases added to the set of bases we want the overlords to check
+		//this set should be populated once the map has finished being analysed
+		for(std::set<BWTA::BaseLocation*>::const_iterator i=BWTA::getBaseLocations().begin();i!=BWTA::getBaseLocations().end();i++)
+		{
+			bool found = false;
+			for(std::set<std::pair<BWAPI::Position, BWAPI::Unit*>>::const_iterator p = overlordBaseLocations.begin(); p != overlordBaseLocations.end(); p++)
+			{
+				if((*i)->getPosition() == (*p).first)
+				{
+					found = true;
+				}
+			}
+			if(!found)
+			{
+				BWAPI::Unit* overlord = NULL;
+				overlordBaseLocations.insert(std::make_pair((*i)->getPosition(), overlord));
+			}
+		}
+	}
+	
+	//assign overlords to base locations that dont have an overlord assigned to them
+	for(std::set<std::pair<BWAPI::Position, BWAPI::Unit*>>::iterator p = overlordBaseLocations.begin(); p != overlordBaseLocations.end(); p++)
+	{
+		if(((*p).second == NULL) && (overlords.size() > 1))
+		{
+			std::set<BWAPI::Unit*>::iterator o = overlords.begin();
+			(*p).second = (*o);
+			overlords.erase(*o);
+		}
+	}
+	
+	//check the positions of overlords and move them appropriately
+	for(std::set<std::pair<BWAPI::Position, BWAPI::Unit*>>::const_iterator p = overlordBaseLocations.begin(); p != overlordBaseLocations.end(); p++)
+	{
+		if((*p).second != NULL)
+		{
+			bool enemiesNearby = false;
+			for(std::set<BWAPI::Unit*>::const_iterator e = visibleEnemies.begin(); e != visibleEnemies.end(); e++)
+			{
+				if((*e)->getDistance((*p).first) < 200)
+				{
+					enemiesNearby = true;
+				}
+			}
+			//move overlord towards its assigned location
+			if(((*p).second->getPosition() != (*p).first) && !enemiesNearby)
+			{
+				(*p).second->move((*p).first, false);
+			}
+			//run away from nearby enemies
+			else
+			{
+				BWAPI::Position position = (*p).second->getPosition();
+				BWAPI::Position xModifier(64,0);
+				BWAPI::Position yModifier(0,64);
+
+				if(getClosestEnemy((*p).second) != NULL)
+				{
+					if(((*p).second)->getPosition().x() > getClosestEnemy((*p).second)->getPosition().x())
+					{
+						position += xModifier;
+					}
+					else if(((*p).second)->getPosition().x() < getClosestEnemy((*p).second)->getPosition().x())
+					{
+						position -= xModifier;
+					}
+					if(((*p).second)->getPosition().y() > getClosestEnemy((*p).second)->getPosition().y())
+					{
+						position += yModifier;
+					}
+					else if(((*p).second)->getPosition().y() < getClosestEnemy((*p).second)->getPosition().y())
+					{
+						position -= yModifier;
+					}
+					((*p).second)->move(position, false);
+				}
+				else
+				{
+					((*p).second)->move(rallyPoint, false);
+				}
+			}
+		}
+	}
 }
 
 /*
@@ -280,14 +377,17 @@ void ArmyManager::addUnit(BWAPI::Unit* unit)
 {
 	allArmy.insert(std::make_pair(unit, 0));
 
-	if(unit->getType() != BWAPI::UnitTypes::Zerg_Mutalisk)
-	{
-		mainArmy.insert(unit);
-	}
-	else
+	if(unit->getType() == BWAPI::UnitTypes::Zerg_Mutalisk)
 	{
 		mutas.insert(unit);
-	//	mainArmy.insert(unit);
+	}
+	else if(unit->getType() == BWAPI::UnitTypes::Zerg_Overlord)
+	{
+		overlords.insert(unit);
+	}
+	else
+	{	
+		mainArmy.insert(unit);
 	}
 	if(rallyPoint != Position(0,0))
 	{
@@ -1059,8 +1159,8 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 		{
 			if(((*e)->getType().airWeapon() != NULL) || (*e)->getType().groundWeapon().targetsAir())
 			{
-				if((((*e)->getType().airWeapon().maxRange() * 3) >= (*i)->getDistance(*e)) 
-					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * 3) >= (*i)->getDistance(*e))))
+				if((((*e)->getType().airWeapon().maxRange() * THREATRANGEMODIFIER) >= (*i)->getDistance(*e)) 
+					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * THREATRANGEMODIFIER) >= (*i)->getDistance(*e))))
 				{
 					threatSupply += (*e)->getType().supplyRequired();
 				}
@@ -1075,29 +1175,36 @@ void ArmyManager::mutaHarass(BWAPI::Position attackPosition)
 			{
 				if((*e)->getType() == BWAPI::UnitTypes::Terran_Bunker)
 				{
-					if((BWAPI::UnitTypes::Terran_Marine.groundWeapon().maxRange() * 3) >= (*i)->getDistance(*e))
+					if((BWAPI::UnitTypes::Terran_Marine.groundWeapon().maxRange() * THREATRANGEMODIFIER) >= (*i)->getDistance(*e))
 					{
 						threatSupply += 8;
 					}
 				}
-				else if((((*e)->getType().airWeapon().maxRange() * 3) >= (*i)->getDistance(*e)) 
-					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * 3) >= (*i)->getDistance(*e))))
+				else if((((*e)->getType().airWeapon().maxRange() * THREATRANGEMODIFIER) >= (*i)->getDistance(*e)) 
+					|| ((*e)->getType().groundWeapon().targetsAir() && (((*e)->getType().groundWeapon().maxRange() * THREATRANGEMODIFIER) >= (*i)->getDistance(*e))))
 				{
 					threatSupply += 8;
 				}
 			}
 		}
 
-		int nearbyMutaSupply = 0;
+		int alliedSupply = 0;
 		for(std::set<Unit*>::const_iterator m = mutas.begin(); m != mutas.end(); m++)
 		{
-			if(((*i)->getDistance(*m) < 64) && ((*i)->getHitPoints() > 24))
+			if(((*i)->getDistance(*m) < ALLIEDRADIUS) && ((*i)->getHitPoints() > 24))
 			{
-				nearbyMutaSupply += BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired();
+				alliedSupply += BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired();
+			}
+		}
+		for(std::set<Unit*>::const_iterator m = mainArmy.begin(); m != mainArmy.end(); m++)
+		{
+			if((*i)->getDistance(*m) < ALLIEDRADIUS)
+			{
+				alliedSupply += (*m)->getType().supplyRequired();
 			}
 		}
 
-		if((nearbyMutaSupply > (threatSupply * 2)) && !(*i)->isAttacking() && ((*i)->getHitPoints() > 24))
+		if((alliedSupply > (threatSupply * 2)) && !(*i)->isAttacking() && ((*i)->getHitPoints() > 24))
 		{
 			/*
 			BWAPI::Unit* target = getClosestEnemyMuta(*i);

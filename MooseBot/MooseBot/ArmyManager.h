@@ -18,12 +18,16 @@ Distributed under GPL v3, see LICENSE for details.
 
 #define REGROUPDIST 500	// the pixel distance a unit must be within to count as having arrived at the regroup location
 #define MAXREGROUPTIME 360	//the frame count that we are willing to wait for units to arrive at the regroup location
+#define THREATRANGEMODIFIER 3 //the multiplier that is applied to enemy ranges when calculating nearby enemy threats for mutas
+#define ALLIEDRADIUS 64 //the radius that is checked for nearby units when calculating the amount of nearby allies
 
 class ArmyManager
 {
 	std::set<std::pair<BWAPI::Unit*, int>> allArmy;
 	std::set<BWAPI::Unit*> mainArmy;
 	std::set<BWAPI::Unit*> mutas;
+	std::set<BWAPI::Unit*> overlords;
+	std::set<std::pair<BWAPI::Position, BWAPI::Unit*>> overlordBaseLocations;
 	std::set<BWAPI::Unit*> regroupingUnits;
 	std::set<BWAPI::Unit*> visibleEnemies;
 	std::set<BWAPI::Unit*> combatWorkers;
@@ -38,6 +42,7 @@ class ArmyManager
 	bool regroupOrdered;
 	bool attackIssued;
 	bool retreatIssued;
+	bool analysed;
 	int regroupFrame;
 	int enemyArmySupply;
 public:
@@ -77,6 +82,7 @@ public:
 	void ArmyManager::mutaRetreat();
 	BWAPI::Unit* ArmyManager::getClosestEnemyMuta(BWAPI::Unit* unit);
 	BWAPI::Unit* ArmyManager::getClosestEnemyBuilding(BWAPI::Unit* unit);
+	void ArmyManager::analysisFinished();
 
 	enum {scout = 0, retreat = 1, attack = 2, defend = 3};
 
@@ -95,4 +101,5 @@ private:
 	void mutaHarass(BWAPI::Position attackPosition);
 	BWAPI::Position moveOutOfRange(BWAPI::Position unitPosition, BWAPI::Unit* enemy, int enemyRange);
 	bool surrounded(BWAPI::Unit* muta);
+	void updateOverlords();
 };

@@ -193,6 +193,7 @@ void MooseBot::onFrame()
     {
 		Broodwar->printf("Finished analyzing map.");
 		analysis_just_finished=false;
+		armyManager.analysisFinished();
 
 		//if we aren't zerg then set the starting build position to the middle of our region
 		//if zerg we want to leave it at our hatchery so we can build on creep
