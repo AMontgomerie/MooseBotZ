@@ -17,6 +17,7 @@ class BuildingPlacer
 		BuildingPlacer::BuildingPlacer();
 		bool BuildingPlacer::placeBuilding(BWAPI::Unit* builder, BWAPI::UnitType building, BWAPI::TilePosition approxLocation);
 		BWAPI::TilePosition BuildingPlacer::getClosestBase(BWAPI::Unit* unit);
+		BWAPI::TilePosition BuildingPlacer::getClosestBase(BWAPI::Position position);
 		BWAPI::TilePosition BuildingPlacer::getNextClosestBase(BWAPI::Unit* unit);
 		bool BuildingPlacer::placeGas(BWAPI::Unit* builder, BWAPI::UnitType building);
 		bool BuildingPlacer::placeExpansion(BWAPI::Unit* builder, BWAPI::UnitType building, BWAPI::TilePosition location);

@@ -36,6 +36,7 @@ class ProductionManager
 	int									lastExpansionFrame;
 	int techLevel;
 	BWAPI::Unit*						homeBase;
+	BWTA::Region*						homeRegion;
 
 	std::vector< std::pair<MetaType, int> > goal;
 public:
@@ -64,6 +65,11 @@ public:
 	void ProductionManager::underThreat(bool newThreat);
 	void ProductionManager::updateBuildOrderGenTechLevel(int techLevel);
 	int ProductionManager::getCurrentTechLevel();
+	void ProductionManager::setHomeRegion(BWTA::Region* home);
+	void ProductionManager::setEnemyComposition(std::set<std::pair<BWAPI::UnitType, int>> composition);
+	void ProductionManager::setArmySupply(int supply);
+	void ProductionManager::addSunken();
+	void ProductionManager::removeSunken();
 private:
 	void ProductionManager::createUnit(BuildOrderItem<PRIORITY_TYPE> element);
 	void ProductionManager::createAddon(BuildOrderItem<PRIORITY_TYPE> element);

@@ -178,6 +178,41 @@ BWAPI::TilePosition BuildingPlacer::getClosestBase(BWAPI::Unit* unit)
 }
 
 /*
+find the closest available base location to the given position
+*/
+BWAPI::TilePosition BuildingPlacer::getClosestBase(BWAPI::Position position)
+{
+	BWAPI::TilePosition buildPosition = TilePosition(0,0);
+	double minDist = 0;
+	bool taken;
+
+	for(std::set<BWTA::BaseLocation*>::const_iterator i = BWTA::getBaseLocations().begin(); i != BWTA::getBaseLocations().end(); i++)
+	{
+		taken = false;
+		for(std::set<BWAPI::Unit*>::const_iterator j = expansions.begin(); j != expansions.end(); j++)
+		{
+			if((*j)->getTilePosition() == (*i)->getTilePosition())
+			{
+				taken = true;
+			}
+		}
+		if(!taken)
+		{
+			if((minDist == 0) || (position.getDistance((*i)->getPosition()) < minDist))
+			{
+				minDist = position.getDistance((*i)->getPosition());
+				buildPosition = (*i)->getTilePosition();
+			}
+		}
+	}
+	if(buildPosition == TilePosition(0,0))
+	{
+		Broodwar->printf("cant find new expansion location");
+	}
+	return buildPosition;
+}
+
+/*
 construct the given building type at the given builder's current location
 this method should be used rather than placeBuilding() for expansions to avoid the expansion being misplaced
 */

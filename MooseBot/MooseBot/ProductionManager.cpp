@@ -18,6 +18,7 @@ ProductionManager::ProductionManager()
 	currentThreat = false;
 	homeBase = NULL;
 	techLevel = 1;
+	homeRegion = NULL;
 
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
@@ -80,7 +81,8 @@ void ProductionManager::update(int armyStatus)
 
 	checkMinerals();
 	production.drawQueueInformation(10, 10);
-//	StrategyManager::Instance().drawEnemyInformation(180, 10);
+	strategyManager.drawEnemyInformation(180, 10);
+	//strategyManager.drawStateInformation(520, 70);
 	strategyManager.update(buildOrderGenerator.getTechLevel(), armyStatus);
 	checkForDeadlock();
 
@@ -189,10 +191,13 @@ void ProductionManager::addElement(BuildOrderItem<PRIORITY_TYPE> element)
 /*
 removes an element from production
 */
-
 void ProductionManager::removeElement()
 {
 	//Broodwar->printf("removing current task from production queue");
+	if((production.getHighestPriorityItem().metaType.isUpgrade()) || production.getHighestPriorityItem().metaType.isBuilding())
+	{
+		strategyManager.productionStarted(production.getHighestPriorityItem().metaType);
+	}
 	production.removeHighestPriorityItem();
 	return;
 }
@@ -621,10 +626,33 @@ void ProductionManager::createBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 		//when constructing an expansion
 		if(element.metaType.unitType.isResourceDepot() && expandingIsAdvisable)
 		{
+			//get the chokepoints linked to our home region
+			std::set<BWTA::Chokepoint*> chokepoints = homeRegion->getChokepoints();
+			double min_length = 10000;
+			BWTA::Chokepoint* choke = NULL;
+	
+			//iterate through all chokepoints and look for the one with the smallest gap (least width)
+			for(std::set<BWTA::Chokepoint*>::iterator c = chokepoints.begin(); c != chokepoints.end(); c++)
+			{
+				double length = (*c)->getWidth();
+				if (length < min_length || choke == NULL)
+				{
+					min_length = length;
+					choke = *c;
+				}
+			}
+
 			if(workerManager.getExpansionBuilder() == NULL)
 			{
 				workerManager.setExpansionBuilder();
-				nextExpansionLocation = buildingPlacer.getClosestBase(workerManager.getExpansionBuilder());
+				if(buildingPlacer.getExpansions().size() == 1)
+				{
+					nextExpansionLocation = buildingPlacer.getClosestBase(choke->getCenter());
+				}
+				else
+				{
+					nextExpansionLocation = buildingPlacer.getClosestBase(workerManager.getExpansionBuilder());
+				}
 				//if we can't find any bases, move on to the next item
 				if(nextExpansionLocation == TilePosition(0,0))
 				{
@@ -720,6 +748,11 @@ void ProductionManager::createBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 	{
 		return;
 	}
+}
+
+void ProductionManager::setHomeRegion(BWTA::Region* home)
+{
+	homeRegion = home;
 }
 
 /*
@@ -943,4 +976,23 @@ void ProductionManager::updateBuildOrderGenTechLevel(int techLevel)
 int ProductionManager::getCurrentTechLevel()
 {
 	return techLevel;
+}
+
+void ProductionManager::setEnemyComposition(std::set<std::pair<BWAPI::UnitType, int>> composition)
+ {
+	 strategyManager.setEnemyComposition(composition);
+ }
+
+void ProductionManager::setArmySupply(int supply)
+{
+	strategyManager.setArmySupply(supply);
+}
+
+void ProductionManager::addSunken()
+{
+	strategyManager.addSunken();
+}
+void ProductionManager::removeSunken()
+{
+	strategyManager.removeSunken();
 }

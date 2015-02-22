@@ -106,13 +106,24 @@ std::vector<MetaType> BuildOrderGenerator::increaseTechLevel(std::vector<MetaTyp
 
 std::vector<MetaType> BuildOrderGenerator::queueUnits(std::vector<MetaType> buildOrder, std::vector< std::pair<MetaType, int> > goal)
 {	
-	for(std::vector< std::pair<MetaType, int> >::const_iterator g = goal.begin(); g != goal.end(); g++)
+	for(std::vector< std::pair<MetaType, int> >::iterator g = goal.begin(); g != goal.end(); g++)
 	{
 		int count = g->second;
 		while(count > 0)
 		{
 		//	BWAPI::Broodwar->printf("adding %s", g->first.unitType.getName().c_str());
-			buildOrder.push_back(MetaType(g->first.unitType));
+			if(g->first.isUpgrade())
+			{
+				buildOrder.push_back(MetaType(g->first.upgradeType));
+			}
+			else if(g->first.isTech())
+			{
+				buildOrder.push_back(MetaType(g->first.techType));
+			}
+			else
+			{
+				buildOrder.push_back(MetaType(g->first.unitType));
+			}
 			count--;
 		}
 	}
@@ -140,78 +151,84 @@ std::vector<MetaType> BuildOrderGenerator::getOpeningBuildOrder()
 {
 	std::vector<MetaType> buildOrder;
 	
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Spawning_Pool));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Extractor));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hatchery));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Metabolic_Boost));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Lair));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Spire));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Creep_Colony));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Sunken_Colony));
-	buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Pneumatized_Carapace));
-	
-	/*
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Spawning_Pool));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Extractor));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hatchery));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hydralisk_Den));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Lair));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Creep_Colony));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Sunken_Colony));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hydralisk));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hydralisk));
-	buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hydralisk));
-	buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Pneumatized_Carapace));
-	*/
+	if(BWAPI::Broodwar->enemy()->getRace() != BWAPI::Races::Protoss)
+	{
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Spawning_Pool));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Extractor));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hatchery));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Metabolic_Boost));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Lair));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Spire));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Creep_Colony));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Sunken_Colony));
+		buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Pneumatized_Carapace));
+	}
+	else
+	{
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Spawning_Pool));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hatchery));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Extractor));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Metabolic_Boost));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Creep_Colony));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Sunken_Colony));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Lair));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Pneumatized_Carapace));
+	}
 
 	return buildOrder;
 }

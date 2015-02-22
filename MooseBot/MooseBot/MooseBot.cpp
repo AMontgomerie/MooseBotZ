@@ -67,32 +67,15 @@ void MooseBot::onFrame()
 	//if we have more bases than our opponent then we don't necessarily need to keep expanding
 	//this will trigger zerg to build additional macro hatcheries instead
 
-	switch(productionManager.getCurrentTechLevel())
+	if(hatcheryCount < 2)
 	{
-	case 1:
-		if(hatcheryCount > scoutManager.getEnemyMiningBaseCount())
+		productionManager.setExpansionStatus(true);
+	}
+	else
+	{
+		switch(productionManager.getCurrentTechLevel())
 		{
-			productionManager.setExpansionStatus(false);
-		}
-		else
-		{
-			productionManager.setExpansionStatus(true);
-		}
-		break;
-	case 2:
-		if((armyManager.getArmySupply() > scoutManager.getEnemyArmySupply()) || (scoutManager.getEnemyMiningBaseCount() > 2))
-		{
-			if(hatcheryCount > scoutManager.getEnemyMiningBaseCount() + 1)
-			{
-				productionManager.setExpansionStatus(false);
-			}
-			else
-			{
-				productionManager.setExpansionStatus(true);
-			}
-		}
-		else
-		{
+		case 1:
 			if(hatcheryCount > scoutManager.getEnemyMiningBaseCount())
 			{
 				productionManager.setExpansionStatus(false);
@@ -101,24 +84,49 @@ void MooseBot::onFrame()
 			{
 				productionManager.setExpansionStatus(true);
 			}
+			break;
+		case 2:
+			if((armyManager.getArmySupply() > scoutManager.getEnemyArmySupply()) || (scoutManager.getEnemyMiningBaseCount() > 2))
+			{
+				if(hatcheryCount > scoutManager.getEnemyMiningBaseCount() + 1)
+				{
+					productionManager.setExpansionStatus(false);
+				}
+				else
+				{
+					productionManager.setExpansionStatus(true);
+				}
+			}
+			else
+			{
+				if(hatcheryCount > scoutManager.getEnemyMiningBaseCount())
+				{
+					productionManager.setExpansionStatus(false);
+				}
+				else
+				{
+					productionManager.setExpansionStatus(true);
+				}
+			}
+			break;
+		case 3:
+		default:
+				productionManager.setExpansionStatus(true);
+			break;
 		}
-		break;
-	case 3:
-	default:
-			productionManager.setExpansionStatus(true);
-		break;
 	}
 
 	productionManager.update(armyManager.getArmyStatus());
 	armyManager.update();
 	scoutManager.update();
-	//StrategyManager::Instance().setEnemyComposition(scoutManager.getEnemyComposition());
+	productionManager.setEnemyComposition(scoutManager.getEnemyComposition());
+	productionManager.setArmySupply(armyManager.getArmySupply());
 	checkUnderAttack();
 
 
 	if(scoutManager.enemyHasCloak() && !cloakDetected)
 	{
-		productionManager.produceDetection();
+		//productionManager.produceDetection();
 		cloakDetected = true;
 	}
 
@@ -131,8 +139,11 @@ void MooseBot::onFrame()
 			if((armyManager.getClosestEnemy(*i) != NULL) &&
 				(armyManager.getClosestEnemy(*i)->getDistance(*i) < armyManager.getClosestEnemy(*i)->getDistance(scoutManager.getClosestEnemyBase(*i))))
 			{
-				productionManager.underThreat(true);
-				foundThreat = true;
+				if(!armyManager.getClosestEnemy(*i)->getType().isWorker())
+				{
+					productionManager.underThreat(true);
+					foundThreat = true;
+				}
 			}
 			if((closestBase == NULL) || ((*i)->getDistance(scoutManager.getClosestEnemyBase(*i)) < closestBase->getDistance(scoutManager.getClosestEnemyBase(*i))))
 			{
@@ -194,6 +205,7 @@ void MooseBot::onFrame()
 		Broodwar->printf("Finished analyzing map.");
 		analysis_just_finished=false;
 		armyManager.analysisFinished();
+		productionManager.setHomeRegion(home);
 
 		//if we aren't zerg then set the starting build position to the middle of our region
 		//if zerg we want to leave it at our hatchery so we can build on creep
@@ -217,6 +229,10 @@ void MooseBot::onUnitDestroy(BWAPI::Unit* unit)
 		if(unit->getType() == BWAPI::UnitTypes::Zerg_Overlord)
 		{
 			productionManager.clearProductionQueue();
+		}
+		if(unit->getType() == BWAPI::UnitTypes::Zerg_Sunken_Colony)
+		{
+			productionManager.removeSunken();
 		}
 		if((unit->getType().isWorker()) || (unit->getType().isBuilding()))
 		{
@@ -292,6 +308,10 @@ void MooseBot::onUnitMorph(BWAPI::Unit* unit)
 				else if(unit->getType() == BWAPI::UnitTypes::Zerg_Hive)
 				{
 					productionManager.updateBuildOrderGenTechLevel(3);
+				}
+				else if(unit->getType() == BWAPI::UnitTypes::Zerg_Sunken_Colony)
+				{
+					productionManager.addSunken();
 				}
 			}
 			else if(unit->getType().isWorker())
