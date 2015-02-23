@@ -37,6 +37,7 @@ class ProductionManager
 	int techLevel;
 	BWAPI::Unit*						homeBase;
 	BWTA::Region*						homeRegion;
+	BWAPI::Unit*						newBase;
 
 	std::vector< std::pair<MetaType, int> > goal;
 public:

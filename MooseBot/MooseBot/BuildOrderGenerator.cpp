@@ -37,24 +37,41 @@ std::vector<MetaType> BuildOrderGenerator::generateBuildOrder(std::vector< std::
 	else
 	{
 	//	BWAPI::Broodwar->printf("we don't have the right tech");
-		for(std::vector< std::pair<MetaType, int> >::const_iterator g = goal.begin(); g != goal.end(); g++)
+		for(std::vector< std::pair<MetaType, int> >::iterator g = goal.begin(); g != goal.end(); g++)
 		{
-			for(std::map<BWAPI::UnitType, int>::const_iterator r = g->first.unitType.requiredUnits().begin(); r != g->first.unitType.requiredUnits().end(); r++)
+			if((g->first.isUnit()) || (g->first.isBuilding()))
 			{
-				if(!compareBuildings(r->first, buildings))
+				for(std::map<BWAPI::UnitType, int>::const_iterator r = g->first.unitType.requiredUnits().begin(); r != g->first.unitType.requiredUnits().end(); r++)
 				{
-					if(!checkTech(r->first))
+					if(!compareBuildings(r->first, buildings))
 					{
-						buildOrder = increaseTechLevel(buildOrder);
+						if(!checkTech(r->first))
+						{
+							buildOrder = increaseTechLevel(buildOrder);
+						}
+						if(((r->first == BWAPI::UnitTypes::Zerg_Lair) && (techLevel > 1)) || ((r->first == BWAPI::UnitTypes::Zerg_Hive) && (techLevel > 2)))
+						{
+						//	BWAPI::Broodwar->printf("already have required tech level");
+						}
+						else
+						{
+							buildOrder.push_back(MetaType(r->first));
+						}
 					}
-					if(((r->first == BWAPI::UnitTypes::Zerg_Lair) && (techLevel > 1)) || ((r->first == BWAPI::UnitTypes::Zerg_Hive) && (techLevel > 2)))
-					{
-						BWAPI::Broodwar->printf("already have required tech level");
-					}
-					else
-					{
-						buildOrder.push_back(MetaType(r->first));
-					}
+				}
+			}
+			else if(g->first.isUpgrade())
+			{
+				if(!compareBuildings(g->first.upgradeType.whatUpgrades(), buildings))
+				{
+					buildOrder.push_back(MetaType(g->first.upgradeType.whatUpgrades()));
+				}
+			}
+			else if(g->first.isTech())
+			{
+				if(!compareBuildings(g->first.techType.whatResearches(), buildings))
+				{
+					buildOrder.push_back(MetaType(g->first.techType.whatResearches()));
 				}
 			}
 		}
@@ -213,21 +230,28 @@ std::vector<MetaType> BuildOrderGenerator::getOpeningBuildOrder()
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 		buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Metabolic_Boost));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Creep_Colony));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Sunken_Colony));
-		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Lair));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Lair));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Overlord));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Creep_Colony));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Sunken_Colony));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Hatchery));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
 		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Drone));
-		buildOrder.push_back(MetaType(BWAPI::UpgradeTypes::Pneumatized_Carapace));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
+		buildOrder.push_back(MetaType(BWAPI::UnitTypes::Zerg_Zergling));
+		
 	}
 
 	return buildOrder;
@@ -249,11 +273,28 @@ int BuildOrderGenerator::calculateSupplyRequired(std::vector<std::pair<MetaType,
 //check that we have the tech to produce each of the required units
 bool BuildOrderGenerator::checkBuilding(std::vector<std::pair<MetaType, int>> goal, std::set<BWAPI::Unit*> buildings)
 {
-	for(std::vector< std::pair<MetaType, int> >::const_iterator g = goal.begin(); g != goal.end(); g++)
+	for(std::vector< std::pair<MetaType, int> >::iterator g = goal.begin(); g != goal.end(); g++)
 	{
-		for(std::map<BWAPI::UnitType, int>::const_iterator r = g->first.unitType.requiredUnits().begin(); r != g->first.unitType.requiredUnits().end(); r++)
+		if((g->first.isUnit()) || (g->first.isBuilding()))
 		{
-			if(!compareBuildings(r->first, buildings))
+			for(std::map<BWAPI::UnitType, int>::const_iterator r = g->first.unitType.requiredUnits().begin(); r != g->first.unitType.requiredUnits().end(); r++)
+			{
+				if(!compareBuildings(r->first, buildings))
+				{
+					return false;
+				}
+			}
+		}
+		else if(g->first.isUpgrade())
+		{
+			if(!compareBuildings(g->first.upgradeType.whatUpgrades(), buildings))
+			{
+				return false;
+			}
+		}
+		else if(g->first.isTech())
+		{
+			if(!compareBuildings(g->first.techType.whatResearches(), buildings))
 			{
 				return false;
 			}

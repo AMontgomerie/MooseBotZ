@@ -42,9 +42,11 @@ class StrategyManager
 	GameState earlyGame;
 	GameState midGame;
 	GameState lateGame;
+	GameState finalState;
 	GameState *nextState;
 	bool lair;
 	bool hive;
+	bool spire;
 	bool threatStatus;
 	int armyStatus;
 	int armySupply;

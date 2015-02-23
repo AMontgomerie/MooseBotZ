@@ -111,25 +111,38 @@ StrategyManager::StrategyManager()
 
 	earlyGame.setTechLevel(1);
 	earlyGame.setWorkerCount(16);
-	earlyGame.setHatcheryCount(3);
+	earlyGame.setHatcheryCount(4);
 	earlyGame.setGasCount(1);
+	earlyGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Metabolic_Boost);
+	earlyGame.addRequiredBuilding(BWAPI::UnitTypes::Zerg_Lair);
 	earlyGame.setName("Early Game");
 
 	midGame.setTechLevel(2);
 	midGame.setWorkerCount(24);
-	midGame.setHatcheryCount(4);
+	midGame.setHatcheryCount(5);
 	midGame.setGasCount(2);
-	earlyGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Metabolic_Boost);
-	earlyGame.addRequiredBuilding(BWAPI::UnitTypes::Zerg_Lair);
+	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Pneumatized_Carapace);
+	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Flyer_Attacks);
+	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Melee_Attacks);
+	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Carapace);
 	midGame.setName("Mid Game");
 
 	lateGame.setTechLevel(3);
 	lateGame.setWorkerCount(36);
-	lateGame.setHatcheryCount(5);
+	lateGame.setHatcheryCount(6);
 	lateGame.setGasCount(2);
-	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Flyer_Attacks);
-	midGame.addRequiredBuilding(BWAPI::UnitTypes::Zerg_Hive);
+	lateGame.addRequiredBuilding(BWAPI::UnitTypes::Zerg_Hive);
 	lateGame.setName("Late Game");
+
+	finalState.setTechLevel(3);
+	finalState.setWorkerCount(50);
+	finalState.setHatcheryCount(7);
+	finalState.setGasCount(3);
+	lateGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Adrenal_Glands);
+	lateGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Chitinous_Plating);
+	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Flyer_Attacks);
+	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Melee_Attacks);
+	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Carapace);
 
 	nextState = &earlyGame;
 	armyStatus = 0;
@@ -142,13 +155,13 @@ void StrategyManager::changeState()
 	{
 		nextState = &midGame;
 	}
-	if(nextState == &midGame)
+	else if(nextState == &midGame)
 	{
 		nextState = &lateGame;
 	}
-	if(nextState == &lateGame)
+	else if(nextState == &lateGame)
 	{
-		nextState = NULL;
+		nextState = &finalState;
 	}
 }
 
@@ -171,6 +184,7 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 
 	std::vector<std::pair<MetaType, int>> additionalTech;
 
+	
 	if(!threatStatus)
 	{
 		std::set<BWAPI::UpgradeType> requiredUpgrades = nextState->getRequiredUpgrades();
@@ -208,12 +222,12 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 			}
 		}
 	}
-
+	
 	for(std::vector<std::pair<MetaType, int>>::iterator i = additionalTech.begin(); i != additionalTech.end(); i++)
 	{
 		newGoal.push_back(std::make_pair((*i).first, (*i).second));
 	}
-
+	
 	if((currentState.getWorkerCount() >= nextState->getWorkerCount()) &&
 		(currentState.getHatcheryCount() >= nextState->getHatcheryCount()) &&
 		(currentState.getGasCount() >= nextState->getGasCount()) &&
@@ -255,9 +269,13 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 			{
 				newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
 			}
-			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 4));
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 2));
 		}
-		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Mutalisk, 4));
+		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 2));
+		if(spire)
+		{
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Mutalisk, 4));
+		}
 		break;
 	case 3:
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 12));
@@ -303,6 +321,7 @@ void StrategyManager::update(int techLevel, int armyStatus)
 	int workerCount = 0;
 	int gasCount = 0;
 	this->armyStatus = armyStatus;
+	spire = false;
 
 	for(std::set<BWAPI::Unit*>::const_iterator i = BWAPI::Broodwar->self()->getUnits().begin(); i != BWAPI::Broodwar->self()->getUnits().end(); i++)
 	{
@@ -318,13 +337,17 @@ void StrategyManager::update(int techLevel, int armyStatus)
 		{
 			gasCount++;
 		}
-		if((*i)->getType() == BWAPI::UnitTypes::Zerg_Lair)
-		{
-			techLevel = 2;
-		}
 		if((*i)->getType() == BWAPI::UnitTypes::Zerg_Hive)
 		{
 			techLevel = 3;
+		}
+		else if((*i)->getType() == BWAPI::UnitTypes::Zerg_Lair)
+		{
+			techLevel = 2;
+		}
+		if(((*i)->getType() == BWAPI::UnitTypes::Zerg_Spire) && ((*i)->isCompleted()))
+		{
+			spire = true;
 		}
 	}
 
@@ -376,32 +399,23 @@ void StrategyManager::drawStateInformation(int x, int y)
 {
 	BWAPI::Broodwar->drawTextScreen(x, y, "Current State:");
 
-	std::string stateName;
-
 	if(nextState == &earlyGame)
 	{
-		stateName = initialState.getName();
+		BWAPI::Broodwar->drawTextScreen(x, y+10,"initial state");
 	}
-	else if(nextState == &midGame)
+	if(nextState == &midGame)
 	{
-		stateName = earlyGame.getName();
+		BWAPI::Broodwar->drawTextScreen(x, y+10,"early game");
 	}
-	else if(nextState == &lateGame)
+	if(nextState == &lateGame)
 	{
-		stateName = midGame.getName();
+		BWAPI::Broodwar->drawTextScreen(x, y+10,"mid game");
 	}
-	else if(nextState == NULL)
+	if(nextState == &finalState)
 	{
-		stateName = lateGame.getName();
-	}
-	else
-	{
-		stateName = "u wot m8";
+		BWAPI::Broodwar->drawTextScreen(x, y+10,"late game");
 	}
 
-	stateName = "m8";
-
-	BWAPI::Broodwar->drawTextScreen(x, y+10, "\x04%s", stateName);
 }
 
 void StrategyManager::setArmySupply(int supply)

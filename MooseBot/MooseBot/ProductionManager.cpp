@@ -82,7 +82,7 @@ void ProductionManager::update(int armyStatus)
 	checkMinerals();
 	production.drawQueueInformation(10, 10);
 	strategyManager.drawEnemyInformation(180, 10);
-	//strategyManager.drawStateInformation(520, 70);
+	strategyManager.drawStateInformation(530, 70);
 	strategyManager.update(buildOrderGenerator.getTechLevel(), armyStatus);
 	checkForDeadlock();
 
@@ -579,7 +579,22 @@ BWAPI::TilePosition ProductionManager::determineBuildPosition(BWAPI::UnitType st
 	//defensive structures
 	if(structureType == BWAPI::UnitTypes::Zerg_Creep_Colony)
 	{
-		return centre;
+		if((newBase->getType() == BWAPI::UnitTypes::Zerg_Hatchery) ||
+			(newBase->getType() == BWAPI::UnitTypes::Zerg_Lair) ||
+			(newBase->getType() == BWAPI::UnitTypes::Zerg_Hive))
+		{
+			return newBase->getTilePosition();
+		}
+		else
+		{
+			for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
+			{
+				if((*i)->getType().isResourceDepot())
+				{
+					return (*i)->getTilePosition();
+				}
+			}
+		}
 	}
 	//macro hatch
 //	else if(structureType == BWAPI::UnitTypes::Zerg_Hatchery)
@@ -591,7 +606,7 @@ BWAPI::TilePosition ProductionManager::determineBuildPosition(BWAPI::UnitType st
 	{
 		return homeBase->getTilePosition();
 	}
-
+	return homeBase->getTilePosition();
 }
 
 /*
@@ -683,6 +698,7 @@ void ProductionManager::createBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 				if(workerManager.getExpansionBuilder()->isIdle())
 				{
 					buildingPlacer.placeExpansion(workerManager.getExpansionBuilder(), element.metaType.unitType, nextExpansionLocation);
+					newBase = workerManager.getExpansionBuilder();
 				}
 						
 			}
@@ -778,7 +794,7 @@ void ProductionManager::startUpgrade(BuildOrderItem<PRIORITY_TYPE> element)
 queues a static detection building to the production queue as highest priority
 */
 void ProductionManager::produceDetection()
-{
+{/*
 	BWAPI::UnitType detector;
 
 	if(Broodwar->self()->getRace() == BWAPI::Races::Terran)
@@ -808,7 +824,7 @@ void ProductionManager::produceDetection()
 	if((Broodwar->self()->getRace() == BWAPI::Races::Zerg) && (getBuilding(BWAPI::UnitTypes::Zerg_Evolution_Chamber) == NULL))
 	{
 		production.queueAsHighestPriority(BWAPI::UnitTypes::Zerg_Evolution_Chamber, true);
-	}
+	}*/
 }
 
 /*
