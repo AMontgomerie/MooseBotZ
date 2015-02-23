@@ -82,7 +82,7 @@ void ProductionManager::update(int armyStatus)
 	checkMinerals();
 	production.drawQueueInformation(10, 10);
 	strategyManager.drawEnemyInformation(180, 10);
-	strategyManager.drawStateInformation(530, 70);
+	strategyManager.drawStateInformation(520, 70);
 	strategyManager.update(buildOrderGenerator.getTechLevel(), armyStatus);
 	checkForDeadlock();
 

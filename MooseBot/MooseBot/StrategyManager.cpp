@@ -138,11 +138,11 @@ StrategyManager::StrategyManager()
 	finalState.setWorkerCount(50);
 	finalState.setHatcheryCount(7);
 	finalState.setGasCount(3);
-	lateGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Adrenal_Glands);
-	lateGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Chitinous_Plating);
-	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Flyer_Attacks);
-	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Melee_Attacks);
-	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Carapace);
+	finalState.addRequiredUpgrade(BWAPI::UpgradeTypes::Adrenal_Glands);
+	finalState.addRequiredUpgrade(BWAPI::UpgradeTypes::Chitinous_Plating);
+	finalState.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Flyer_Attacks);
+	finalState.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Melee_Attacks);
+	finalState.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Carapace);
 
 	nextState = &earlyGame;
 	armyStatus = 0;
@@ -154,14 +154,17 @@ void StrategyManager::changeState()
 	if(nextState == &earlyGame)
 	{
 		nextState = &midGame;
+		return;
 	}
 	else if(nextState == &midGame)
 	{
 		nextState = &lateGame;
+		return;
 	}
 	else if(nextState == &lateGame)
 	{
 		nextState = &finalState;
+		return;
 	}
 }
 
@@ -401,19 +404,23 @@ void StrategyManager::drawStateInformation(int x, int y)
 
 	if(nextState == &earlyGame)
 	{
-		BWAPI::Broodwar->drawTextScreen(x, y+10,"initial state");
+		BWAPI::Broodwar->drawTextScreen(x, y+10,"\x04 initial state");
 	}
-	if(nextState == &midGame)
+	else if(nextState == &midGame)
 	{
-		BWAPI::Broodwar->drawTextScreen(x, y+10,"early game");
+		BWAPI::Broodwar->drawTextScreen(x, y+10,"\x04 early game");
 	}
-	if(nextState == &lateGame)
+	else if(nextState == &lateGame)
 	{
-		BWAPI::Broodwar->drawTextScreen(x, y+10,"mid game");
+		BWAPI::Broodwar->drawTextScreen(x, y+10,"\x04 mid game");
 	}
-	if(nextState == &finalState)
+	else if(nextState == &finalState)
 	{
-		BWAPI::Broodwar->drawTextScreen(x, y+10,"late game");
+		BWAPI::Broodwar->drawTextScreen(x, y+10,"\x04 late game");
+	}
+	else
+	{
+		BWAPI::Broodwar->drawTextScreen(x, y+10,"\x04 final state");
 	}
 
 }

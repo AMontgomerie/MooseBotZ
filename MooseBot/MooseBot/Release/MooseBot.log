@@ -1,8 +1,8 @@
-﻿Build started 23/02/2015 23:19:08.
+﻿Build started 23/02/2015 23:46:10.
      1>Project "C:\Users\IarfMoose\Documents\GitHub\MooseBotZ\MooseBot\MooseBot\MooseBot.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /IC:\Users\IarfMoose\Downloads\BWAPI_3.7.4/include /IC:\Users\IarfMoose\Downloads\boost_1_57_0 /Zi /nologo /W3 /WX- /Ox /Ob2 /Oi /Ot /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D MOOSEBOT_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt ProductionManager.cpp
-         ProductionManager.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /IC:\Users\IarfMoose\Downloads\BWAPI_3.7.4/include /IC:\Users\IarfMoose\Downloads\boost_1_57_0 /Zi /nologo /W3 /WX- /Ox /Ob2 /Oi /Ot /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D MOOSEBOT_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt StrategyManager.cpp
+         StrategyManager.cpp
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\IarfMoose\Documents\GitHub\MooseBotZ\MooseBot\Release\MooseBot.dll" /INCREMENTAL:NO /NOLOGO C:\Users\IarfMoose\Downloads\BWAPI_3.7.4/lib/BWAPI.lib C:\Users\IarfMoose\Downloads\BWAPI_3.7.4/lib/BWTA.lib C:\Users\IarfMoose\Downloads\BWAPI_3.7.4/lib/tinyxml.lib "C:\Users\IarfMoose\Downloads\BWAPI_3.7.4/lib/CGAL-vc90-mt.lib" "C:\Users\IarfMoose\Downloads\BWAPI_3.7.4/lib/libboost_thread-vc90-mt-1_40.lib" "C:\Users\IarfMoose\Downloads\BWAPI_3.7.4/lib/gmp-vc90-mt.lib" "C:\Users\IarfMoose\Downloads\BWAPI_3.7.4/lib/mpfr-vc90-mt.lib" kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Release\MooseBot.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\IarfMoose\Documents\GitHub\MooseBotZ\MooseBot\Release\MooseBot.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /MACHINE:X86 /DLL Release\ArmyManager.obj
          Release\BuildingPlacer.obj
@@ -26,4 +26,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:04.25
+Time Elapsed 00:00:04.02
