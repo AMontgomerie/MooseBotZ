@@ -6,11 +6,10 @@ Distributed under GPL v3, see LICENSE for details.
 #pragma once
 #include <BWAPI.h>
 #include <BWTA.h>
-#include "BuildOrderQueue.h"
 #include "BuildingPlacer.h"
 #include "WorkerManager.h"
 #include "BuildOrderGenerator.h"
-#include "StrategyManager.h"
+#include "BuildOrderQueue.h"
 
 
 #define MAXWAIT 720*2
@@ -21,7 +20,6 @@ class ProductionManager
 	BuildingPlacer						buildingPlacer;
 	BuildOrderQueue						production;
 	BuildOrderGenerator					buildOrderGenerator;
-	StrategyManager						strategyManager;
 
 	std::set<BWAPI::Unit*>				buildings;
 	std::vector<BWAPI::Unit*>			gas;
@@ -39,38 +37,38 @@ class ProductionManager
 	BWTA::Region*						homeRegion;
 	BWAPI::Unit*						newBase;
 
-	std::vector< std::pair<MetaType, int> > goal;
+	std::vector<std::pair<MetaType, int>>	goal;
+	std::vector<BWAPI::UpgradeType>			upgrades;
 public:
-	ProductionManager::ProductionManager();
-	void ProductionManager::setBuildOrder(std::vector<MetaType> buildOrder);
-	void ProductionManager::generateBuildOrder(std::vector< std::pair<MetaType, int> > goal);
-	void ProductionManager::update(int armyStatus);
-	void ProductionManager::checkGas();
-	void ProductionManager::addElement(BuildOrderItem<PRIORITY_TYPE> element);
-	void ProductionManager::removeElement();
+	ProductionManager();
+	~ProductionManager() {}
+	static ProductionManager & Instance();
+	const void ProductionManager::setBuildOrder(std::vector<MetaType> buildOrder);
+	const void ProductionManager::generateBuildOrder(std::vector< std::pair<MetaType, int> > goal);
+	const void ProductionManager::update(std::vector< std::pair<MetaType, int> > newGoal);
+	const void ProductionManager::checkGas();
+	const void ProductionManager::addElement(BuildOrderItem<PRIORITY_TYPE> element);
+	const void ProductionManager::removeElement();
 	BuildOrderItem<PRIORITY_TYPE> & ProductionManager::getNextElement();
-	bool ProductionManager::emptyQueue();
-	void ProductionManager::addBuilding(BWAPI::Unit* building);
-	void ProductionManager::removeBuilding(BWAPI::Unit* building);
-	void ProductionManager::productionStarted(BWAPI::Unit* unit);
+	const bool ProductionManager::emptyQueue();
+	const void ProductionManager::addBuilding(BWAPI::Unit* building);
+	const void ProductionManager::removeBuilding(BWAPI::Unit* building);
+	const void ProductionManager::productionStarted(BWAPI::Unit* unit);
 	BWAPI::Unit* ProductionManager::getBuilding(BWAPI::UnitType buildingType);
 	BWAPI::Unit* ProductionManager::getBuilding(BWAPI::UnitType buildingType, bool addon);
-	void ProductionManager::removeUnit(BWAPI::Unit* unit);
-	void ProductionManager::addUnit(BWAPI::Unit* unit);
+	const void ProductionManager::removeUnit(BWAPI::Unit* unit);
+	const void ProductionManager::addUnit(BWAPI::Unit* unit);
 	BWAPI::Unit* ProductionManager::getWorker();
-	void ProductionManager::addGas(BWAPI::Unit* unit);
-	void ProductionManager::produceDetection();
-	void ProductionManager::setCentre(BWAPI::TilePosition centre);
-	void ProductionManager::clearProductionQueue();
-	void ProductionManager::setExpansionStatus(bool status);
-	void ProductionManager::underThreat(bool newThreat);
-	void ProductionManager::updateBuildOrderGenTechLevel(int techLevel);
-	int ProductionManager::getCurrentTechLevel();
-	void ProductionManager::setHomeRegion(BWTA::Region* home);
-	void ProductionManager::setEnemyComposition(std::set<std::pair<BWAPI::UnitType, int>> composition);
-	void ProductionManager::setArmySupply(int supply);
-	void ProductionManager::addSunken();
-	void ProductionManager::removeSunken();
+	const void ProductionManager::addGas(BWAPI::Unit* unit);
+	const void ProductionManager::produceDetection();
+	const void ProductionManager::setCentre(BWAPI::TilePosition centre);
+	const void ProductionManager::clearProductionQueue();
+	const void ProductionManager::setExpansionStatus(bool status);
+	const void ProductionManager::underThreat(bool newThreat);
+	const void ProductionManager::updateBuildOrderGenTechLevel(int techLevel);
+	const int ProductionManager::getCurrentTechLevel();
+	const void ProductionManager::setHomeRegion(BWTA::Region* home);
+	std::vector<BWAPI::UpgradeType> ProductionManager::getUpgrades();
 private:
 	void ProductionManager::createUnit(BuildOrderItem<PRIORITY_TYPE> element);
 	void ProductionManager::createAddon(BuildOrderItem<PRIORITY_TYPE> element);

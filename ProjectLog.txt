@@ -1,78 +1,21 @@
-24/01/2015
-- copied over old 2014 moosebot code
-- switched race to Z
-- fixed bug causing only 1 larvae to be morphed at a time
-- fixed bug meaning larvae couldn't be morphed when there was a morphing hatchery
-- created getAllLarvae() method which returns a pool of all idle larvae so they can be spent easily
-- fixed bug causing only 1 zergling from each pair to be added to army
-- removed overlords from regroup commands because they are really slow and were causing attacks to be delayed
-- added check to base count vs enemy base count to prevent over expanding
-	- additional bases are now produced as macro hatcheries
-	- will need a fix if switch back to T/P to prevent random nexus/cc spamming
+ideas:
 
-plans:
-- introduce more micro
-- fix build order search bugs
-- add muta harass
+build order generation:
+- take current larvae pool into account when determining build order goals
+	- if we dont have enough army + larvae to defend, then add sunkens
+- take enemy army position into account
+	- estimate time till attack, if its soon then try to make lots of lings rather than something slow
+- opponent modelling
+	- based on what we know we can predict enemy workers/income/army sizes
+	- compare this information to our current status to determine actions
+	- are we behind in economy? build more drones and get agressive
+	- are we ahead in economy? get defensive
 
-bugs:
-- build order search hangs up if told to find a BO including anything except mutas or hydras
-
-25/01/2015
-- removed buildordersearch
-- removed strategy manager
-- added buildordergenerator
-	- takes build order goal inputs and turns a vector of executable metatypes
-	- calculates supply required and adds additional overlords
-	- takes required buildings into account and constructs ones we dont have
-	- checks if we dont have required lair/hive and adds one to queue if needed
-- created new strategy manager
-	- provides build order goals
-		- has a set of ideal game states
-		- compares current state to the next ideal state
-		- build anything that is missing from the ideal state
-
-plans:
-- introduce a way to modify goals depending on the situation
-	- e.g. dont make loads of drones if enemy is coming to attack
-	- change type of unit being made depending on the point in the game which we are at
-
-26/01/2015
-
-- seperated mutas from main army so they can harass and not retreat when army retreats
-	- still very crude, needs work
-- added check for threats (if enemy units are closer to my base than their base)
-	- when a threat is present, ai will stop making drones and make extra units and static D
-	- when there is no threat, ai will make more drones and less units
-- unit composition goals now scale with tech
-	- will go ling > muta/ling > ultra/ling
-
-bugs:
-- makes 2 hives
-- gets stuck regrouping for ages
-- muta micro is a mess
-- lings dont always retreat/regroup to the correct place
-- overlord behaviour is a bit random
-- making too many hatcheries at 1 base and walling in
-	- should take more expansions even vs 1 base opponent
-- building placement
-	- need to make sure we dont build things in stupid places
-	- sunkens at at-risk bases
-	- no massive walls of macro hatches
-	- no tech buildings at the front
-
-extra improvements
-- add ability to get important upgrades outside of scripted build order
-	- e.g. when in midgame state, build evos and get 1/1 or something
-
-08/02/15
-- turned off seperate muta control and added them back to main army temporarily while dealing with other issues
-	- //mutas.insert(unit); @ ArmyManager::addUnit();
-	- // mainArmy.erase(unit);@ ArmyManager::removeUnit();
-- turned it back on
-- fixed building placement so tech buildings are always added to main and defensive structures to the closest base to enemy base
-
-- muta micro needs to be changed so mutas continue towards attackposition but make detours to avoid enemy units
-
-09/02/15
-- simplified/improved muta micro so that mutas mostly stay out of range of enemies and attack when no nearby enemies
+counter attacking:
+- early game as Z is a lot about map control
+	- just playing reactive leads to low drone count
+- get ling speed and set up counter attack
+	- either forces base trade or buys time for more defense
+- set up special counter attack force of lings
+	- seperate from main army
+	- waits outside enemy base and attacks when they move out

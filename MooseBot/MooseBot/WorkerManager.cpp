@@ -446,10 +446,11 @@ void WorkerManager::addGas(BWAPI::Unit* gas)
 	std::set<BWAPI::Unit*> workers;
 
 	//limiting the number of geysers we will mine from to 2
-	if(!(gases.size() > 2))
+	if(!(gases.size() > 3))
 	{
 		gases.insert(std::make_pair(gas, workers));
 	}
+	saturateGas(gas);
 }
 
 //remove a geyser from the set of controlled geysers

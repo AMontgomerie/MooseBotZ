@@ -8,18 +8,25 @@ ScoutManager deals with scouting the opponent, managing scouting units and stori
 #include "ScoutManager.h"
 using namespace BWAPI;
 
-ScoutManager::ScoutManager(void)
+ScoutManager::ScoutManager() :
+	scout(NULL),
+	enemyCloak(false),
+	enemyArmySupply(0),
+	enemyBaseCount(0)
 {
-	scout = NULL;
-	enemyCloak = false;
-	enemyArmySupply = 0;
-	enemyBaseCount = 0;
+}
+
+ScoutManager & ScoutManager::Instance()
+{
+	static ScoutManager instance;
+
+	return instance;
 }
 
 /*
 Currently redundant - sending worker home now takes place in sendScout
 */
-void ScoutManager::update()
+const void ScoutManager::update()
 {
 	calculateEnemyArmySupply();
 }
@@ -27,7 +34,7 @@ void ScoutManager::update()
 /*
 assigns a unit to be a dedicated scout;
 */
-void ScoutManager::setScout(BWAPI::Unit* scout)
+const void ScoutManager::setScout(BWAPI::Unit* scout)
 {
 	this->scout = scout;
 }
@@ -35,7 +42,7 @@ void ScoutManager::setScout(BWAPI::Unit* scout)
 /*
 returns the scout;
 */
-BWAPI::Unit* ScoutManager::getScout()
+const BWAPI::Unit* ScoutManager::getScout()
 {
 	return scout;
 }
@@ -43,7 +50,7 @@ BWAPI::Unit* ScoutManager::getScout()
 /*
 sends the scout to the possible enemy base locations
 */
-void ScoutManager::sendScout()
+const void ScoutManager::sendScout()
 {
 	if(!BWTA::getStartLocations().empty())
 	{
@@ -86,7 +93,7 @@ void ScoutManager::sendScout()
 /*
 adds an enemy base to the set of known enemy base locations
 */
-void ScoutManager::addEnemyBase(BWAPI::Unit* enemyBase)
+const void ScoutManager::addEnemyBase(BWAPI::Unit* enemyBase)
 {
 	knownEnemyBases.insert(enemyBase->getPosition());
 	
@@ -104,7 +111,7 @@ void ScoutManager::addEnemyMiningBase(BWAPI::Unit* enemyBase)
 	knownEnemyMiningBases.insert(enemyBase->getPosition());
 }
 
-void ScoutManager::removeEnemyBase(BWAPI::Unit* enemyBase)
+const void ScoutManager::removeEnemyBase(BWAPI::Unit* enemyBase)
 {
 	knownEnemyBases.erase(enemyBase->getPosition());
 
@@ -122,7 +129,7 @@ void ScoutManager::removeEnemyMiningBase(BWAPI::Unit* enemyBase)
 /*
 checks all of the known enemy base locations and returns the one that is closest to the unit* given as a parameter
 */
-BWAPI::Position ScoutManager::getClosestEnemyBase(BWAPI::Unit* unit)
+const BWAPI::Position ScoutManager::getClosestEnemyBase(BWAPI::Unit* unit)
 {
 	BWAPI::Position closestEnemyBase = Position(0,0);
 
@@ -145,7 +152,7 @@ BWAPI::Position ScoutManager::getClosestEnemyBase(BWAPI::Unit* unit)
 /*
 returns a known enemy base location
 */
-BWAPI::Position ScoutManager::getEnemyBase()
+const BWAPI::Position ScoutManager::getEnemyBase()
 {	
 	if(knownEnemyBases.empty())
 	{
@@ -174,7 +181,7 @@ BWAPI::Position ScoutManager::getEnemyBase()
 /*
 adds a discovered enemy unit to the set of known enemy units
 */
-void ScoutManager::addEnemyUnit(BWAPI::Unit* unit)
+const void ScoutManager::addEnemyUnit(BWAPI::Unit* unit)
 {
 	for(std::set<std::pair<BWAPI::Unit*, BWAPI::UnitType>>::const_iterator i = knownEnemyUnits.begin(); i != knownEnemyUnits.end(); i++)
 	{
@@ -189,7 +196,7 @@ void ScoutManager::addEnemyUnit(BWAPI::Unit* unit)
 /*
 removes a destroyed enemy unit from the set of known enemy units
 */
-void ScoutManager::removeEnemyUnit(BWAPI::Unit* unit)
+const void ScoutManager::removeEnemyUnit(BWAPI::Unit* unit)
 {
 	for(std::set<std::pair<BWAPI::Unit*, BWAPI::UnitType>>::const_iterator i = knownEnemyUnits.begin(); i != knownEnemyUnits.end(); i++)
 	{
@@ -206,7 +213,7 @@ Returns a set containing the unit types that make up the enemy unit composition,
 and the percentage that that unit type makes up of the overall composition.
 This only includes enemy units that we have scouted so far.
 */
-std::set<std::pair<BWAPI::UnitType, int>> ScoutManager::getEnemyComposition()
+const std::set<std::pair<BWAPI::UnitType, int>> ScoutManager::getEnemyComposition()
 {
 	std::set<std::pair<BWAPI::UnitType, int>> enemyComposition;
 	bool matchFound = false;
@@ -254,7 +261,7 @@ std::set<std::pair<BWAPI::UnitType, int>> ScoutManager::getEnemyComposition()
 /*
 returns true if we have discovered an enemy unit that can cloak
 */
-bool ScoutManager::enemyHasCloak()
+const bool ScoutManager::enemyHasCloak()
 {
 	return enemyCloak;
 }
@@ -275,12 +282,12 @@ void ScoutManager::calculateEnemyArmySupply()
 /*
 returns total known enemy army supply
 */
-int ScoutManager::getEnemyArmySupply()
+const int ScoutManager::getEnemyArmySupply()
 {
 	return enemyArmySupply;
 }
 
-void ScoutManager::addEnemyStaticD(BWAPI::Unit* unit)
+const void ScoutManager::addEnemyStaticD(BWAPI::Unit* unit)
 {
 	for(std::set<std::pair<BWAPI::Unit*, BWAPI::UnitType>>::const_iterator i = enemyStaticD.begin(); i != enemyStaticD.end(); i++)
 	{
@@ -292,7 +299,7 @@ void ScoutManager::addEnemyStaticD(BWAPI::Unit* unit)
 	enemyStaticD.insert(std::make_pair(unit, unit->getType()));
 }
 
-void ScoutManager::removeEnemyStaticD(BWAPI::Unit* unit)
+const void ScoutManager::removeEnemyStaticD(BWAPI::Unit* unit)
 {
 	for(std::set<std::pair<BWAPI::Unit*, BWAPI::UnitType>>::const_iterator i = enemyStaticD.begin(); i != enemyStaticD.end(); i++)
 	{
@@ -304,7 +311,7 @@ void ScoutManager::removeEnemyStaticD(BWAPI::Unit* unit)
 	}
 }
 
-int ScoutManager::getTotalEnemyStaticD()
+const int ScoutManager::getTotalEnemyStaticD()
 {
 	int enemyStaticDCount = 0;
 
@@ -315,7 +322,7 @@ int ScoutManager::getTotalEnemyStaticD()
 	return enemyStaticDCount;
 }
 
-void ScoutManager::scoutExpos()
+const void ScoutManager::scoutExpos()
 {
 	if(!BWTA::getBaseLocations().empty())
 	{
@@ -339,7 +346,7 @@ void ScoutManager::scoutExpos()
 	}
 }
 
-int ScoutManager::getEnemyMiningBaseCount()
+const int ScoutManager::getEnemyMiningBaseCount()
 {
 	return knownEnemyMiningBases.size();
 }

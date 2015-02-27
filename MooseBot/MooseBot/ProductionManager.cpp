@@ -6,19 +6,17 @@ Distributed under GPL v3, see LICENSE for details.
 #include "ProductionManager.h"
 using namespace BWAPI;
 
-ProductionManager::ProductionManager()
+ProductionManager::ProductionManager() :
+	expanding(false),
+	expansionQueued(false),
+	deadlockfound(false),
+	expandingIsAdvisable(true),
+	lastProductionFrame(0),
+	lastExpansionFrame(0),
+	homeBase(NULL),
+	homeRegion(NULL)
 {
-	expanding = false;
-	expansionQueued = false;
-	setBuildOrder(buildOrderGenerator.getOpeningBuildOrder());
-	deadlockfound = false;
-	expandingIsAdvisable = true;
-	lastProductionFrame = 0;
-	lastExpansionFrame = 0;
-	currentThreat = false;
-	homeBase = NULL;
-	techLevel = 1;
-	homeRegion = NULL;
+	Instance().setBuildOrder(buildOrderGenerator.getOpeningBuildOrder());
 
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
@@ -31,29 +29,18 @@ ProductionManager::ProductionManager()
 	}
 }
 
-void ProductionManager::underThreat(bool newThreat)
+ProductionManager & ProductionManager::Instance()
 {
-	if(!currentThreat && newThreat)
-	{
-		currentThreat = true;
-		strategyManager.setThreatStatus(true);
-		clearProductionQueue();
-		std::vector< std::pair<MetaType, int> > goal = strategyManager.getNewGoal();
-		drawGoalInformation(10, 100, goal);
-		generateBuildOrder(goal);
-	}
-	else if(!newThreat)
-	{
-		currentThreat = false;
-		strategyManager.setThreatStatus(false);
-	}
+	static ProductionManager instance;
+
+	return instance;
 }
 
 /*
 taken from UAlbertaBot
 Copies the build order described in the parameter into the production queue
 */
-void ProductionManager::setBuildOrder(std::vector<MetaType> buildOrder)
+const void ProductionManager::setBuildOrder(std::vector<MetaType> buildOrder)
 {
 	// clear the current build order
 	production.clearAll();
@@ -67,7 +54,7 @@ void ProductionManager::setBuildOrder(std::vector<MetaType> buildOrder)
 	}
 }
 
-void ProductionManager::generateBuildOrder(std::vector< std::pair<MetaType, int> > goal)
+const void ProductionManager::generateBuildOrder(std::vector< std::pair<MetaType, int> > goal)
 {
 	std::vector<MetaType> buildOrder = buildOrderGenerator.generateBuildOrder(goal, buildings);
 
@@ -75,23 +62,21 @@ void ProductionManager::generateBuildOrder(std::vector< std::pair<MetaType, int>
 	setBuildOrder(buildOrder);
 }
 
-void ProductionManager::update(int armyStatus)
+const void ProductionManager::update(std::vector< std::pair<MetaType, int> > newGoal)
 {
 	workerManager.update();
 
 	checkMinerals();
 	production.drawQueueInformation(10, 10);
-	strategyManager.drawEnemyInformation(180, 10);
-	strategyManager.drawStateInformation(520, 70);
-	strategyManager.update(buildOrderGenerator.getTechLevel(), armyStatus);
+	//drawGoalInformation(10, 100, goal);
 	checkForDeadlock();
 
 	//if the production queue is empty
 	if(emptyQueue())
 	{
 		//get a new build order goal
-		std::vector< std::pair<MetaType, int> > goal = strategyManager.getNewGoal();
-		drawGoalInformation(10, 100, goal);
+		std::vector< std::pair<MetaType, int> > goal = newGoal;
+		//drawGoalInformation(10, 100, goal);
 		//perform a new build order search
 		generateBuildOrder(goal);
 	}
@@ -182,7 +167,7 @@ bool ProductionManager::canAfford(BuildOrderItem<PRIORITY_TYPE> element)
 /*
 adds a new element to production
 */
-void ProductionManager::addElement(BuildOrderItem<PRIORITY_TYPE> element)
+const void ProductionManager::addElement(BuildOrderItem<PRIORITY_TYPE> element)
 {
 	production.queueItem(element);
 	return;
@@ -191,13 +176,9 @@ void ProductionManager::addElement(BuildOrderItem<PRIORITY_TYPE> element)
 /*
 removes an element from production
 */
-void ProductionManager::removeElement()
+const void ProductionManager::removeElement()
 {
 	//Broodwar->printf("removing current task from production queue");
-	if((production.getHighestPriorityItem().metaType.isUpgrade()) || production.getHighestPriorityItem().metaType.isBuilding())
-	{
-		strategyManager.productionStarted(production.getHighestPriorityItem().metaType);
-	}
 	production.removeHighestPriorityItem();
 	return;
 }
@@ -213,7 +194,7 @@ BuildOrderItem<PRIORITY_TYPE>& ProductionManager::getNextElement()
 /*
 adds a building to the set of player controlled buildings
 */
-void ProductionManager::addBuilding(Unit* building)
+const void ProductionManager::addBuilding(Unit* building)
 {
 	if(!buildings.insert(building).second)
 	{
@@ -225,7 +206,7 @@ void ProductionManager::addBuilding(Unit* building)
 /*
 removes a building from the set of player controlled buildings
 */
-void ProductionManager::removeBuilding(Unit* building)
+const void ProductionManager::removeBuilding(Unit* building)
 {
 	//clear the production queue and search for a new goal in case this was a key structure
 	clearProductionQueue();
@@ -323,7 +304,7 @@ BWAPI::Unit* ProductionManager::getUncompletedBuilding(BWAPI::UnitType buildingT
 takes a newly created unit as a parameter and checks if this unit is the next expected unit in the production queue
 if it is then connect the unit pointer to the production element so that it's progress can be tracked
 */
-void ProductionManager::productionStarted(BWAPI::Unit* unit)
+const void ProductionManager::productionStarted(BWAPI::Unit* unit)
 {
 	removeElement();
 	lastProductionFrame = BWAPI::Broodwar->getFrameCount();
@@ -350,7 +331,7 @@ void ProductionManager::productionStarted(BWAPI::Unit* unit)
 /*
 assigns a new unit to the correct manager
 */
-void ProductionManager::addUnit(BWAPI::Unit* unit)
+const void ProductionManager::addUnit(BWAPI::Unit* unit)
 {
 	if(unit->getType().isWorker())
 	{
@@ -371,7 +352,7 @@ void ProductionManager::addUnit(BWAPI::Unit* unit)
 /*
 removes a destroyed unit from the relevant manager
 */
-void ProductionManager::removeUnit(BWAPI::Unit* unit)
+const void ProductionManager::removeUnit(BWAPI::Unit* unit)
 {
 	if(unit->getType().isWorker())
 	{
@@ -390,7 +371,7 @@ void ProductionManager::removeUnit(BWAPI::Unit* unit)
 /*
 puts workers in gas if needed
 */
-void ProductionManager::checkGas()
+const void ProductionManager::checkGas()
 {
 
 	for(std::vector<Unit*>::const_iterator i = gas.begin(); i != gas.end();)
@@ -419,7 +400,7 @@ BWAPI::Unit* ProductionManager::getWorker()
 /*
 adds a new geyser to the set of controlled gas geysers
 */
-void ProductionManager::addGas(BWAPI::Unit* unit)
+const void ProductionManager::addGas(BWAPI::Unit* unit)
 {
 	gas.push_back(unit);
 }
@@ -427,7 +408,7 @@ void ProductionManager::addGas(BWAPI::Unit* unit)
 /*
 checks if the production queue is empty
 */
-bool ProductionManager::emptyQueue()
+const bool ProductionManager::emptyQueue()
 {
 	if(production.isEmpty())
 	{
@@ -436,7 +417,7 @@ bool ProductionManager::emptyQueue()
 	return false;
 }
 
-void ProductionManager::clearProductionQueue()
+const void ProductionManager::clearProductionQueue()
 {
 	production.clearAll();
 }
@@ -502,42 +483,6 @@ morphs the unit type specified in the build order item
 */
 void ProductionManager::morphUnit(BuildOrderItem<PRIORITY_TYPE> element)
 {
-	/*
-	BWAPI::Unit* structure;
-
-	//check that we can afford to train the new unit
-	if((Broodwar->self()->minerals() >= element.metaType.mineralPrice()) && (Broodwar->self()->gas() >= element.metaType.gasPrice()))
-	{
-		structure = getBuilding(BWAPI::UnitTypes::Zerg_Hatchery);
-		if(structure == NULL)
-		{
-			structure = getBuilding(BWAPI::UnitTypes::Zerg_Lair);
-		}
-		if(structure == NULL)
-		{
-			structure = getBuilding(BWAPI::UnitTypes::Zerg_Hive);
-		}
-		if(structure != NULL)
-		{
-			std::set<BWAPI::Unit*> larvae = structure->getLarva();
-			//if there are any idle larvae, then train the unit
-			if (larvae.size() > 0)
-			{
-				BWAPI::Unit* larva = *larvae.begin();
-				larva->morph(element.metaType.unitType);
-			}
-			else
-			{
-				return;
-			}
-		}
-		else
-		{
-			Broodwar->printf("ProductionManager Error: No available hatcheries");
-			return;
-		}
-	}
-	*/
 	std::set<BWAPI::Unit*> larvae = getAllLarvae();
 
 	if(larvae.size() > 0)
@@ -555,17 +500,12 @@ std::set<BWAPI::Unit*> ProductionManager::getAllLarvae()
 	//go through all buildings and find the ones with idle larvae
 	for(std::set<Unit*>::const_iterator i = buildings.begin(); i != buildings.end(); i++)
 	{
-//		if(((*i)->getType() == BWAPI::UnitTypes::Zerg_Hatchery) ||
-//			((*i)->getType() == BWAPI::UnitTypes::Zerg_Lair) ||
-//			((*i)->getType() == BWAPI::UnitTypes::Zerg_Hive))
-//		{
 		std::set<BWAPI::Unit*> gotLarvae = (*i)->getLarva();
-			//add all the larvae found to the total
-			for(std::set<Unit*>::const_iterator l = gotLarvae.begin(); l != gotLarvae.end(); l++)
-			{
-				larvae.insert(*l);
-			}
-//		}
+		//add all the larvae found to the total
+		for(std::set<Unit*>::const_iterator l = gotLarvae.begin(); l != gotLarvae.end(); l++)
+		{
+			larvae.insert(*l);
+		}
 	}
 
 	return larvae;
@@ -596,11 +536,6 @@ BWAPI::TilePosition ProductionManager::determineBuildPosition(BWAPI::UnitType st
 			}
 		}
 	}
-	//macro hatch
-//	else if(structureType == BWAPI::UnitTypes::Zerg_Hatchery)
-//	{
-		//
-//	}
 	//tech structures
 	else
 	{
@@ -694,11 +629,25 @@ void ProductionManager::createBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 				{
 					workerManager.getExpansionBuilder()->move(Position(nextExpansionLocation), false);
 					expanding = false;
-				}						
+				}
+				else
+				{
+					if(nextExpansionLocation == NULL)
+					{
+						BWAPI::Broodwar->printf("next expansion location is null");
+					}
+				}
 				if(workerManager.getExpansionBuilder()->isIdle())
 				{
-					buildingPlacer.placeExpansion(workerManager.getExpansionBuilder(), element.metaType.unitType, nextExpansionLocation);
-					newBase = workerManager.getExpansionBuilder();
+					if(nextExpansionLocation.getDistance(workerManager.getExpansionBuilder()->getTilePosition()) > 24)
+					{
+						workerManager.getExpansionBuilder()->move(Position(nextExpansionLocation), false);
+					}
+					else
+					{
+						buildingPlacer.placeExpansion(workerManager.getExpansionBuilder(), element.metaType.unitType, nextExpansionLocation);
+						newBase = workerManager.getExpansionBuilder();
+					}
 				}
 						
 			}
@@ -766,9 +715,14 @@ void ProductionManager::createBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 	}
 }
 
-void ProductionManager::setHomeRegion(BWTA::Region* home)
+const void ProductionManager::setHomeRegion(BWTA::Region* home)
 {
 	homeRegion = home;
+}
+
+std::vector<BWAPI::UpgradeType> ProductionManager::getUpgrades()
+{
+	return upgrades;
 }
 
 /*
@@ -782,49 +736,13 @@ void ProductionManager::startUpgrade(BuildOrderItem<PRIORITY_TYPE> element)
 	if(structure != NULL && structure->isCompleted())
 	{
 		structure->upgrade(element.metaType.upgradeType);
+		upgrades.push_back(element.metaType.upgradeType);
 		removeElement();
 	}
 	else
 	{
 		Broodwar->printf("ProductionManager Error: No structure available to research '%s'", element.metaType.getName().c_str());
 	}
-}
-
-/*
-queues a static detection building to the production queue as highest priority
-*/
-void ProductionManager::produceDetection()
-{/*
-	BWAPI::UnitType detector;
-
-	if(Broodwar->self()->getRace() == BWAPI::Races::Terran)
-	{
-		detector = BWAPI::UnitTypes::Terran_Missile_Turret;
-	}
-	else if(Broodwar->self()->getRace() == BWAPI::Races::Protoss)
-	{
-		detector = BWAPI::UnitTypes::Protoss_Photon_Cannon;
-	}
-	else if(Broodwar->self()->getRace() == BWAPI::Races::Zerg)
-	{
-		detector = BWAPI::UnitTypes::Zerg_Spore_Colony;
-	}
-
-	production.queueAsHighestPriority(detector, true);
-	production.queueAsHighestPriority(detector, true);
-
-	if((Broodwar->self()->getRace() == BWAPI::Races::Terran) && (getBuilding(BWAPI::UnitTypes::Terran_Engineering_Bay) == NULL))
-	{
-		production.queueAsHighestPriority(BWAPI::UnitTypes::Terran_Engineering_Bay, true);
-	}
-	if((Broodwar->self()->getRace() == BWAPI::Races::Protoss) && (getBuilding(BWAPI::UnitTypes::Protoss_Forge) == NULL))
-	{
-		production.queueAsHighestPriority(BWAPI::UnitTypes::Protoss_Forge, true);
-	}
-	if((Broodwar->self()->getRace() == BWAPI::Races::Zerg) && (getBuilding(BWAPI::UnitTypes::Zerg_Evolution_Chamber) == NULL))
-	{
-		production.queueAsHighestPriority(BWAPI::UnitTypes::Zerg_Evolution_Chamber, true);
-	}*/
 }
 
 /*
@@ -851,7 +769,7 @@ void ProductionManager::drawGoalInformation(int x, int y, std::vector< std::pair
 /*
 sets the tile position at the centre of our region (used for placing buildings)
 */
-void ProductionManager::setCentre(BWAPI::TilePosition tilePosition)
+const void ProductionManager::setCentre(BWAPI::TilePosition tilePosition)
 {
 	centre = tilePosition;
 }
@@ -971,7 +889,7 @@ bool ProductionManager::isTechBuilding(BuildOrderItem<PRIORITY_TYPE> element)
 	return false;
 }
 
-void ProductionManager::setExpansionStatus(bool status)
+const void ProductionManager::setExpansionStatus(bool status)
 {
 	if(status)
 	{
@@ -983,32 +901,13 @@ void ProductionManager::setExpansionStatus(bool status)
 	}
 }
 
-void ProductionManager::updateBuildOrderGenTechLevel(int techLevel)
+const void ProductionManager::updateBuildOrderGenTechLevel(int techLevel)
 {
 	buildOrderGenerator.setTechLevel(techLevel);
 	this->techLevel = techLevel;
 }
 
-int ProductionManager::getCurrentTechLevel()
+const int ProductionManager::getCurrentTechLevel()
 {
 	return techLevel;
-}
-
-void ProductionManager::setEnemyComposition(std::set<std::pair<BWAPI::UnitType, int>> composition)
- {
-	 strategyManager.setEnemyComposition(composition);
- }
-
-void ProductionManager::setArmySupply(int supply)
-{
-	strategyManager.setArmySupply(supply);
-}
-
-void ProductionManager::addSunken()
-{
-	strategyManager.addSunken();
-}
-void ProductionManager::removeSunken()
-{
-	strategyManager.removeSunken();
 }

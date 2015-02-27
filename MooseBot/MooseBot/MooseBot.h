@@ -8,10 +8,11 @@ Distributed under GPL v3, see LICENSE for details.
 #include <BWAPI.h>
 #include <BWTA.h>
 #include <windows.h>
+#include "Timer.hpp"
 #include "ProductionManager.h"
 #include "ArmyManager.h"
 #include "ScoutManager.h"
-#include "Timer.hpp"
+#include "StrategyManager.h"
 
 extern bool analyzed;
 extern bool analysis_just_finished;
@@ -21,10 +22,7 @@ DWORD WINAPI AnalyzeThread();
 
 class MooseBot: public BWAPI::AIModule
 {
-	ProductionManager	productionManager;
-	ArmyManager			armyManager;
-	ScoutManager		scoutManager;
-
+	bool underThreat;
 public:
   virtual void onStart();
   //virtual void onEnd(bool isWinner);

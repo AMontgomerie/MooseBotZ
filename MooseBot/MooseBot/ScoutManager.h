@@ -18,25 +18,27 @@ class ScoutManager
 	int enemyBaseCount;
 	bool enemyCloak;
 public:
-	ScoutManager(void);
-	void ScoutManager::update();
-	void ScoutManager::setScout(BWAPI::Unit* scout);
-	BWAPI::Unit* ScoutManager::getScout();
-	void ScoutManager::sendScout();
-	void ScoutManager::addEnemyBase(BWAPI::Unit* enemyBase);
-	void ScoutManager::removeEnemyBase(BWAPI::Unit* enemyBase);
-	BWAPI::Position ScoutManager::getClosestEnemyBase(BWAPI::Unit* unit);
-	BWAPI::Position ScoutManager::getEnemyBase();
-	void ScoutManager::addEnemyUnit(BWAPI::Unit* unit);
-	void ScoutManager::removeEnemyUnit(BWAPI::Unit* unit);
-	std::set<std::pair<BWAPI::UnitType, int>> ScoutManager::getEnemyComposition();
-	bool ScoutManager::enemyHasCloak();
-	int ScoutManager::getEnemyArmySupply();
-	void ScoutManager::addEnemyStaticD(BWAPI::Unit* unit);
-	void ScoutManager::removeEnemyStaticD(BWAPI::Unit* unit);
-	int ScoutManager::getTotalEnemyStaticD();
-	void ScoutManager::scoutExpos();
-	int ScoutManager::getEnemyMiningBaseCount();
+	ScoutManager();
+	~ScoutManager() {}
+	static ScoutManager & Instance();
+	const void ScoutManager::update();
+	const void ScoutManager::setScout(BWAPI::Unit* scout);
+	const BWAPI::Unit* ScoutManager::getScout();
+	const void ScoutManager::sendScout();
+	const void ScoutManager::addEnemyBase(BWAPI::Unit* enemyBase);
+	const void ScoutManager::removeEnemyBase(BWAPI::Unit* enemyBase);
+	const BWAPI::Position ScoutManager::getClosestEnemyBase(BWAPI::Unit* unit);
+	const BWAPI::Position ScoutManager::getEnemyBase();
+	const void ScoutManager::addEnemyUnit(BWAPI::Unit* unit);
+	const void ScoutManager::removeEnemyUnit(BWAPI::Unit* unit);
+	const std::set<std::pair<BWAPI::UnitType, int>> ScoutManager::getEnemyComposition();
+	const bool ScoutManager::enemyHasCloak();
+	const int ScoutManager::getEnemyArmySupply();
+	const void ScoutManager::addEnemyStaticD(BWAPI::Unit* unit);
+	const void ScoutManager::removeEnemyStaticD(BWAPI::Unit* unit);
+	const int ScoutManager::getTotalEnemyStaticD();
+	const void ScoutManager::scoutExpos();
+	const int ScoutManager::getEnemyMiningBaseCount();
 private:
 	void ScoutManager::calculateEnemyArmySupply();
 	void ScoutManager::addEnemyMiningBase(BWAPI::Unit* enemyBase);

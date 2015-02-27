@@ -38,8 +38,10 @@ void MooseBot::onStart()
 	//give starting units to production manager to deal with
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{	
-		productionManager.addUnit(*i);
+		ProductionManager::Instance().addUnit(*i);
 	}
+
+	underThreat = false;
 }
 
 /*
@@ -51,8 +53,8 @@ void MooseBot::onFrame()
 
 	timer.start();
 
-	armyManager.setAttackPosition(scoutManager.getEnemyBase()); 
-	armyManager.setEnemyArmySupply(scoutManager.getEnemyArmySupply() + (scoutManager.getTotalEnemyStaticD() * 8)); //enemy army supply + (number of static defence * 8) 
+	ArmyManager::Instance().setAttackPosition(ScoutManager::Instance().getEnemyBase()); 
+	ArmyManager::Instance().setEnemyArmySupply(ScoutManager::Instance().getEnemyArmySupply() + (ScoutManager::Instance().getTotalEnemyStaticD() * 8)); //enemy army supply + (number of static defence * 8) 
 
 	int hatcheryCount = 0;
 
@@ -64,98 +66,78 @@ void MooseBot::onFrame()
 		}
 	}
 
-	//if we have more bases than our opponent then we don't necessarily need to keep expanding
-	//this will trigger zerg to build additional macro hatcheries instead
-
-	if(hatcheryCount < 2)
+	switch(StrategyManager::Instance().getState())
 	{
-		productionManager.setExpansionStatus(true);
-	}
-	else
-	{
-		switch(productionManager.getCurrentTechLevel())
+	case 0:
+	case 1:
+		if(hatcheryCount < 2)
 		{
-		case 1:
-			if(hatcheryCount > scoutManager.getEnemyMiningBaseCount())
-			{
-				productionManager.setExpansionStatus(false);
-			}
-			else
-			{
-				productionManager.setExpansionStatus(true);
-			}
-			break;
-		case 2:
-			if((armyManager.getArmySupply() > scoutManager.getEnemyArmySupply()) || (scoutManager.getEnemyMiningBaseCount() > 2))
-			{
-				if(hatcheryCount > scoutManager.getEnemyMiningBaseCount() + 1)
-				{
-					productionManager.setExpansionStatus(false);
-				}
-				else
-				{
-					productionManager.setExpansionStatus(true);
-				}
-			}
-			else
-			{
-				if(hatcheryCount > scoutManager.getEnemyMiningBaseCount())
-				{
-					productionManager.setExpansionStatus(false);
-				}
-				else
-				{
-					productionManager.setExpansionStatus(true);
-				}
-			}
-			break;
-		case 3:
-		default:
-				productionManager.setExpansionStatus(true);
-			break;
+			ProductionManager::Instance().setExpansionStatus(true);
 		}
+		else
+		{
+			ProductionManager::Instance().setExpansionStatus(false);
+		}
+		break;
+	case 2:
+	case 3:
+	case 4:
+	default:
+		ProductionManager::Instance().setExpansionStatus(true);
+		break;
 	}
 
-	productionManager.update(armyManager.getArmyStatus());
-	armyManager.update();
-	scoutManager.update();
-	productionManager.setEnemyComposition(scoutManager.getEnemyComposition());
-	productionManager.setArmySupply(armyManager.getArmySupply());
+	ProductionManager::Instance().update(StrategyManager::Instance().getNewGoal());
+	ArmyManager::Instance().update();
+	ScoutManager::Instance().update();
+	StrategyManager::Instance().setEnemyComposition(ScoutManager::Instance().getEnemyComposition());
+	StrategyManager::Instance().setArmySupply(ArmyManager::Instance().getArmySupply());
 	checkUnderAttack();
+	StrategyManager::Instance().drawEnemyInformation(180, 10);
+	StrategyManager::Instance().drawStateInformation(520, 70);
+	StrategyManager::Instance().update(ArmyManager::Instance().getArmyStatus());
+	StrategyManager::Instance().updateUpgrades(ProductionManager::Instance().getUpgrades());
 
 
-	if(scoutManager.enemyHasCloak() && !cloakDetected)
+	if(ScoutManager::Instance().enemyHasCloak() && !cloakDetected)
 	{
-		//productionManager.produceDetection();
 		cloakDetected = true;
 	}
 
-	bool foundThreat = false;
+	bool newThreat = false;
 	BWAPI::Unit* closestBase = NULL;
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
 		if((*i)->getType().isResourceDepot())
 		{
-			if((armyManager.getClosestEnemy(*i) != NULL) &&
-				(armyManager.getClosestEnemy(*i)->getDistance(*i) < armyManager.getClosestEnemy(*i)->getDistance(scoutManager.getClosestEnemyBase(*i))))
+			if((ArmyManager::Instance().getClosestEnemy(*i) != NULL) &&
+				(ArmyManager::Instance().getClosestEnemy(*i)->getDistance(*i) < ArmyManager::Instance().getClosestEnemy(*i)->getDistance(ScoutManager::Instance().getClosestEnemyBase(*i))))
 			{
-				if(!armyManager.getClosestEnemy(*i)->getType().isWorker())
+				if(!ArmyManager::Instance().getClosestEnemy(*i)->getType().isWorker()) //&& (BWAPI::Broodwar->self()->supplyUsed() >= 40))
 				{
-					productionManager.underThreat(true);
-					foundThreat = true;
+					newThreat = true;
 				}
 			}
-			if((closestBase == NULL) || ((*i)->getDistance(scoutManager.getClosestEnemyBase(*i)) < closestBase->getDistance(scoutManager.getClosestEnemyBase(*i))))
+			if((closestBase == NULL) || ((*i)->getDistance(ScoutManager::Instance().getClosestEnemyBase(*i)) < closestBase->getDistance(ScoutManager::Instance().getClosestEnemyBase(*i))))
 			{
 				closestBase = (*i);
 			}
 		}
 	}
-	armyManager.setRallyPoint(closestBase->getRegion()->getCenter());
-	productionManager.setCentre(closestBase->getTilePosition());
-	if(!foundThreat)
+	ArmyManager::Instance().setRallyPoint(closestBase->getRegion()->getCenter());
+	ProductionManager::Instance().setCentre(closestBase->getTilePosition());
+	if(newThreat && !underThreat)
 	{
-		productionManager.underThreat(false);
+		underThreat = true;
+		StrategyManager::Instance().setThreatStatus(true);
+		ProductionManager::Instance().clearProductionQueue();
+		std::vector< std::pair<MetaType, int> > goal = StrategyManager::Instance().getNewGoal();
+		ProductionManager::Instance().generateBuildOrder(goal);
+	}
+	if(!newThreat)
+	{
+		underThreat = false;
+		StrategyManager::Instance().setThreatStatus(false);
 	}
 
 	//if map analysis is complete
@@ -164,10 +146,10 @@ void MooseBot::onFrame()
 		drawTerrainData();
 
 		//assign a worker as a scout and send them to find the enemy base
-		if((Broodwar->self()->supplyUsed() >= 18) && (!scouted) && (scoutManager.getEnemyBase() == Position(0,0)))
+		if((Broodwar->self()->supplyUsed() >= 18) && (!scouted) && (ScoutManager::Instance().getEnemyBase() == Position(0,0)))
 		{
-			scoutManager.setScout(productionManager.getWorker());
-			scoutManager.sendScout();
+			ScoutManager::Instance().setScout(ProductionManager::Instance().getWorker());
+			ScoutManager::Instance().sendScout();
 			scouted = true;
 		}
 
@@ -189,14 +171,16 @@ void MooseBot::onFrame()
 			}
 		}
 		//if we have a choke facing towards the enemy base then rally units to there
-		if((scoutManager.getEnemyBase() != Position(0,0)) && (scoutManager.getEnemyBase() != NULL) && (choke->getCenter().getDistance(scoutManager.getEnemyBase()) < home->getCenter().getDistance(scoutManager.getEnemyBase())))
+		if((ScoutManager::Instance().getEnemyBase() != Position(0,0)) 
+			&& (ScoutManager::Instance().getEnemyBase() != NULL) 
+			&& (choke->getCenter().getDistance(ScoutManager::Instance().getEnemyBase()) < home->getCenter().getDistance(ScoutManager::Instance().getEnemyBase())))
 		{
-		//	armyManager.setRallyPoint(choke->getCenter());
+			//armyManager.setRallyPoint(choke->getCenter());
 		}
 		//otherwise rally to the middle of our base
 		else
 		{
-		//	armyManager.setRallyPoint(home->getCenter());
+			//armyManager.setRallyPoint(home->getCenter());
 		}
 	}
 
@@ -204,14 +188,14 @@ void MooseBot::onFrame()
     {
 		Broodwar->printf("Finished analyzing map.");
 		analysis_just_finished=false;
-		armyManager.analysisFinished();
-		productionManager.setHomeRegion(home);
+		ArmyManager::Instance().analysisFinished();
+		ProductionManager::Instance().setHomeRegion(home);
 
 		//if we aren't zerg then set the starting build position to the middle of our region
 		//if zerg we want to leave it at our hatchery so we can build on creep
 		if((Broodwar->self()->getRace() != BWAPI::Races::Zerg) && (Broodwar->mapFileName() != "(4)Andromeda.scx"))
 		{
-			productionManager.setCentre(TilePosition(home->getCenter()));
+			ProductionManager::Instance().setCentre(TilePosition(home->getCenter()));
 		}
 	}
 	
@@ -228,34 +212,34 @@ void MooseBot::onUnitDestroy(BWAPI::Unit* unit)
 	{
 		if(unit->getType() == BWAPI::UnitTypes::Zerg_Overlord)
 		{
-			productionManager.clearProductionQueue();
+			ProductionManager::Instance().clearProductionQueue();
 		}
 		if(unit->getType() == BWAPI::UnitTypes::Zerg_Sunken_Colony)
 		{
-			productionManager.removeSunken();
+			StrategyManager::Instance().removeSunken();
 		}
 		if((unit->getType().isWorker()) || (unit->getType().isBuilding()))
 		{
-			productionManager.removeUnit(unit);
+			ProductionManager::Instance().removeUnit(unit);
 		}
 		if((!unit->getType().isWorker()) && (!unit->getType().isBuilding()))
 		{
-			armyManager.removeUnit(unit);
+			ArmyManager::Instance().removeUnit(unit);
 		}
 	}
 	else
 	{
 		if(unit->getType().isBuilding())
 		{
-			scoutManager.removeEnemyBase(unit);
+			ScoutManager::Instance().removeEnemyBase(unit);
 			if((unit->getType() == BWAPI::UnitTypes::Protoss_Photon_Cannon)
 				|| (unit->getType() == BWAPI::UnitTypes::Terran_Bunker)
 				|| (unit->getType() == BWAPI::UnitTypes::Zerg_Sunken_Colony))
 			{
-				scoutManager.removeEnemyStaticD(unit);
+				ScoutManager::Instance().removeEnemyStaticD(unit);
 			}
 		}
-		scoutManager.removeEnemyUnit(unit);
+		ScoutManager::Instance().removeEnemyUnit(unit);
 	}
 }
 
@@ -266,13 +250,17 @@ void MooseBot::onUnitMorph(BWAPI::Unit* unit)
 {
 	if(unit->getPlayer() == Broodwar->self())
 	{
-		if(!productionManager.emptyQueue())
+		if(!ProductionManager::Instance().emptyQueue())
 		{
-			BuildOrderItem<PRIORITY_TYPE>& nextElement = productionManager.getNextElement();
+			BuildOrderItem<PRIORITY_TYPE>& nextElement = ProductionManager::Instance().getNextElement();
 		//	Broodwar->printf("%s morphed", unit->getType().getName().c_str());
 			if(unit->getBuildType() == nextElement.metaType.unitType)
 			{
-				productionManager.productionStarted(unit);
+				ProductionManager::Instance().productionStarted(unit);
+				if(unit->getType().isBuilding())
+				{
+					StrategyManager::Instance().productionStarted(MetaType(unit->getType()));
+				}
 			}
 		}
 		else
@@ -284,11 +272,14 @@ void MooseBot::onUnitMorph(BWAPI::Unit* unit)
 		{
 			if(unit->getBuildType().isWorker())
 			{
-				productionManager.addUnit(unit);
+				ProductionManager::Instance().addUnit(unit);
+			}
+			else if(unit->getBuildType() == BWAPI::UnitTypes::Zerg_Overlord)
+			{
 			}
 			else
 			{
-				armyManager.addUnit(unit);
+				ArmyManager::Instance().addUnit(unit);
 			}
 		}
 		//otherwise we can just check the type of the unit
@@ -296,31 +287,31 @@ void MooseBot::onUnitMorph(BWAPI::Unit* unit)
 		{
 			if((unit->getType() == Broodwar->self()->getRace().getRefinery()))
 			{
-				productionManager.addGas(unit);
+				ProductionManager::Instance().addGas(unit);
 			}
 			else if(unit->getType().isBuilding())
 			{
-				productionManager.addBuilding(unit);	
+				ProductionManager::Instance().addBuilding(unit);	
 				if(unit->getType() == BWAPI::UnitTypes::Zerg_Lair)
 				{
-					productionManager.updateBuildOrderGenTechLevel(2);
+					ProductionManager::Instance().updateBuildOrderGenTechLevel(2);
 				}
 				else if(unit->getType() == BWAPI::UnitTypes::Zerg_Hive)
 				{
-					productionManager.updateBuildOrderGenTechLevel(3);
+					ProductionManager::Instance().updateBuildOrderGenTechLevel(3);
 				}
 				else if(unit->getType() == BWAPI::UnitTypes::Zerg_Sunken_Colony)
 				{
-					productionManager.addSunken();
+					StrategyManager::Instance().addSunken();
 				}
 			}
 			else if(unit->getType().isWorker())
 			{
-				productionManager.addUnit(unit);
+				ProductionManager::Instance().addUnit(unit);
 			}
-			else if((!unit->getType().isWorker()) && (!unit->getType().isBuilding()))
+			else if((!unit->getType().isWorker()) && (!unit->getType().isBuilding())) //&& (unit->getType() != BWAPI::UnitTypes::Zerg_Overlord))
 			{
-				armyManager.addUnit(unit);
+				ArmyManager::Instance().addUnit(unit);
 			}
 		}
 	}
@@ -329,11 +320,11 @@ void MooseBot::onUnitMorph(BWAPI::Unit* unit)
 		//for storing/removing positions of morphing enemy zerg buildings
 		if(unit->getBuildType().isBuilding())
 		{
-			scoutManager.addEnemyBase(unit);
+			ScoutManager::Instance().addEnemyBase(unit);
 		}
 		if(unit->getType().isWorker())
 		{
-			scoutManager.removeEnemyBase(unit);
+			ScoutManager::Instance().removeEnemyBase(unit);
 		}
 	}
 }
@@ -350,15 +341,15 @@ void MooseBot::onUnitCreate(BWAPI::Unit* unit)
 		{
 			if(unit->getType().isBuilding())
 			{
-				productionManager.addBuilding(unit);	
+				ProductionManager::Instance().addBuilding(unit);	
 			}
-			if(!productionManager.emptyQueue())
+			if(!ProductionManager::Instance().emptyQueue())
 			{
-				BuildOrderItem<PRIORITY_TYPE>& nextElement = productionManager.getNextElement();
+				BuildOrderItem<PRIORITY_TYPE>& nextElement = ProductionManager::Instance().getNextElement();
 			//	Broodwar->printf("%s created", unit->getType().getName().c_str());
 				if(unit->getType() == nextElement.metaType.unitType)
 				{
-					productionManager.productionStarted(unit);
+					ProductionManager::Instance().productionStarted(unit);
 				}
 			}
 			else
@@ -367,7 +358,7 @@ void MooseBot::onUnitCreate(BWAPI::Unit* unit)
 			}
 			if(unit->getType().isWorker())
 			{
-				productionManager.addUnit(unit);
+				ProductionManager::Instance().addUnit(unit);
 			}
 			else
 			{
@@ -386,20 +377,20 @@ void MooseBot::onUnitComplete(BWAPI::Unit* unit)
 	{
 		if(unit->getType().isBuilding())
 		{
-			productionManager.addBuilding(unit);	
+			ProductionManager::Instance().addBuilding(unit);	
 		}
 		// to prevent only 1 zergling from each pair being added to army during morph time
 		else if(unit->getType() == BWAPI::UnitTypes::Zerg_Zergling)
 		{
-			armyManager.addUnit(unit);
+			ArmyManager::Instance().addUnit(unit);
 		}
 		else if(unit->getType().isWorker() && (Broodwar->self()->getRace() != BWAPI::Races::Zerg))
 		{
-			productionManager.addUnit(unit);
+			ProductionManager::Instance().addUnit(unit);
 		}
 		else if((!unit->getType().isWorker()) && (!unit->getType().isBuilding()) && (Broodwar->self()->getRace() != BWAPI::Races::Zerg))
 		{
-			armyManager.addUnit(unit);
+			ArmyManager::Instance().addUnit(unit);
 		}
 	}
 }
@@ -412,16 +403,16 @@ void MooseBot::onUnitShow(BWAPI::Unit* unit)
 {
 	if((unit->getPlayer() == Broodwar->enemy()) && !unit->getType().isBuilding())
 	{
-		armyManager.addEnemy(unit);
+		ArmyManager::Instance().addEnemy(unit);
 	}
 	if((unit->getPlayer() == Broodwar->enemy()) && (unit->getType().isBuilding()))
 	{
-		scoutManager.addEnemyBase(unit);
+		ScoutManager::Instance().addEnemyBase(unit);
 		if((unit->getType() == BWAPI::UnitTypes::Protoss_Photon_Cannon)
 			|| (unit->getType() == BWAPI::UnitTypes::Terran_Bunker)
 			|| (unit->getType() == BWAPI::UnitTypes::Zerg_Sunken_Colony))
 		{
-			scoutManager.addEnemyStaticD(unit);
+			ScoutManager::Instance().addEnemyStaticD(unit);
 		}
 	}
 	else if((unit->getPlayer() == Broodwar->enemy()) 
@@ -431,7 +422,7 @@ void MooseBot::onUnitShow(BWAPI::Unit* unit)
 		&& !(unit->getType() == BWAPI::UnitTypes::Zerg_Larva))
 	{
 		//Broodwar->printf("enemy %s discovered", unit->getType( ).getName().c_str());
-		scoutManager.addEnemyUnit(unit);
+		ScoutManager::Instance().addEnemyUnit(unit);
 	}
 }
 
@@ -442,7 +433,7 @@ void MooseBot::onUnitHide(BWAPI::Unit* unit)
 {
 	if(unit->getPlayer()->isEnemy(Broodwar->self()))
 	{
-		armyManager.removeEnemy(unit);
+		ArmyManager::Instance().removeEnemy(unit);
 	}
 }
 
@@ -530,10 +521,10 @@ void MooseBot::checkUnderAttack()
 {
 	for(std::set<Unit*>::const_iterator i=Broodwar->self()->getUnits().begin();i!=Broodwar->self()->getUnits().end();i++)
 	{
-		if ((*i)->isUnderAttack() && ((*i)->getType().isBuilding()))// || (*i)->getType().isWorker()))
+		if ((*i)->isUnderAttack() && ((*i)->getType().isBuilding() || (*i)->getType().isWorker()) && ((*i) != ScoutManager::Instance().getScout()))
 		{
-			armyManager.setArmyStatus(defend);
-			armyManager.setDefendPosition((*i)->getPosition());
+			ArmyManager::Instance().setArmyStatus(defend);
+			ArmyManager::Instance().setDefendPosition((*i)->getPosition());
 		}
 	}
 }

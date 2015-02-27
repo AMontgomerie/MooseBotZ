@@ -16,7 +16,7 @@ private:
 public:
 	GameState();
 	GameState(int techLevel, int workerCount, int hatcheryCount, int gasCount);
-	~GameState() {};
+	~GameState() {}
 	int getTechLevel();
 	int getWorkerCount();
 	int getHatcheryCount();
@@ -54,21 +54,24 @@ class StrategyManager
 	std::set<std::pair<BWAPI::UnitType, int>> enemyComposition;
 public:	
 	StrategyManager();
-	~StrategyManager() {};
-	void update(int techLevel, int armyStatus);
-	std::vector<std::pair<MetaType, int>> getNewGoal();
-	void changeState();
-	void setThreatStatus(bool threat);
-	void setArmyStatus(int status);
-	void setEnemyComposition(std::set<std::pair<BWAPI::UnitType, int>> composition);
-	void drawEnemyInformation(int x, int y);
-	void setArmySupply(int supply);
-	void StrategyManager::addSunken();
-	void StrategyManager::removeSunken();
-	void productionStarted(MetaType element);
-	void drawStateInformation(int x, int y);
+	~StrategyManager() {}
+	static StrategyManager & Instance();
+	const void update(int armyStatus);
+	const std::vector<std::pair<MetaType, int>> getNewGoal();
+	const void changeState();
+	const void setThreatStatus(bool threat);
+	const void setArmyStatus(int status);
+	const void setEnemyComposition(std::set<std::pair<BWAPI::UnitType, int>> composition);
+	const void drawEnemyInformation(int x, int y);
+	const void setArmySupply(int supply);
+	const void addSunken();
+	const void removeSunken();
+	const void productionStarted(MetaType element);
+	const void drawStateInformation(int x, int y);
+	const int getState();
+	void updateUpgrades(std::vector<BWAPI::UpgradeType> upgrades);
 private:
-	int StrategyManager::calculateEnemyArmySupply();
+	int calculateEnemyArmySupply();
 
 	enum {scout = 0, retreat = 1, attack = 2, defend = 3};
 };

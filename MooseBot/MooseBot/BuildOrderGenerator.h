@@ -4,12 +4,14 @@
 class BuildOrderGenerator
 {
 	int techLevel;
+	bool threatStatus;
 public:
 	BuildOrderGenerator(void);
 	std::vector<MetaType> generateBuildOrder(std::vector<std::pair<MetaType, int>> goal, std::set<BWAPI::Unit*> buildings);
 	std::vector<MetaType> getOpeningBuildOrder();
 	int getTechLevel();
 	void setTechLevel(int techLevel);
+	void setThreatStatus(bool threat);
 private:
 	std::vector<MetaType> queueUnits(std::vector<MetaType> buildOrder, std::vector< std::pair<MetaType, int> > goal);
 	int calculateSupplyRequired(std::vector<std::pair<MetaType, int>> goal);

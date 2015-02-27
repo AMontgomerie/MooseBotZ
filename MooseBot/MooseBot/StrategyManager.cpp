@@ -111,26 +111,27 @@ StrategyManager::StrategyManager()
 
 	earlyGame.setTechLevel(1);
 	earlyGame.setWorkerCount(16);
-	earlyGame.setHatcheryCount(4);
+	earlyGame.setHatcheryCount(3);
 	earlyGame.setGasCount(1);
 	earlyGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Metabolic_Boost);
+	//earlyGame.addRequiredBuilding(BWAPI::UnitTypes::Zerg_Extractor);
 	earlyGame.addRequiredBuilding(BWAPI::UnitTypes::Zerg_Lair);
 	earlyGame.setName("Early Game");
 
 	midGame.setTechLevel(2);
 	midGame.setWorkerCount(24);
-	midGame.setHatcheryCount(5);
+	midGame.setHatcheryCount(4);
 	midGame.setGasCount(2);
 	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Pneumatized_Carapace);
 	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Flyer_Attacks);
-	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Melee_Attacks);
-	midGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Carapace);
 	midGame.setName("Mid Game");
 
 	lateGame.setTechLevel(3);
 	lateGame.setWorkerCount(36);
 	lateGame.setHatcheryCount(6);
 	lateGame.setGasCount(2);
+	lateGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Melee_Attacks);
+	lateGame.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Carapace);
 	lateGame.addRequiredBuilding(BWAPI::UnitTypes::Zerg_Hive);
 	lateGame.setName("Late Game");
 
@@ -143,13 +144,21 @@ StrategyManager::StrategyManager()
 	finalState.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Flyer_Attacks);
 	finalState.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Melee_Attacks);
 	finalState.addRequiredUpgrade(BWAPI::UpgradeTypes::Zerg_Carapace);
+	finalState.setName("Final State");
 
 	nextState = &earlyGame;
 	armyStatus = 0;
 	sunkenCount = 0;
 }
 
-void StrategyManager::changeState()
+StrategyManager & StrategyManager::Instance()
+{
+	static StrategyManager instance;
+
+	return instance;
+}
+
+const void StrategyManager::changeState()
 {
 	if(nextState == &earlyGame)
 	{
@@ -168,13 +177,65 @@ void StrategyManager::changeState()
 	}
 }
 
-std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
+const int StrategyManager::getState()
+{
+	if(nextState == &earlyGame)
+	{
+		return 0;
+	}
+	else if(nextState == &midGame)
+	{
+		return 1;
+	}
+	else if(nextState == &lateGame)
+	{
+		return 2;
+	}
+	else if(nextState == &finalState)
+	{
+		return 3;
+	}
+	else
+	{
+		return 4;
+	}
+}
+
+const std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 {
 	std::vector<std::pair<MetaType, int>> newGoal;
 
-	if((currentState.getWorkerCount() < nextState->getWorkerCount()) && (armyStatus != defend) && !threatStatus)
+	if((currentState.getWorkerCount() < nextState->getWorkerCount()) && (armyStatus != defend))
 	{
-		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Drone, (nextState->getWorkerCount() - currentState.getWorkerCount())));
+		int goalDrones = 0;
+
+		if(!threatStatus)
+		{
+			if((nextState->getWorkerCount() - currentState.getWorkerCount()) > 8)
+			{
+				goalDrones = 8;
+			}
+			else
+			{
+				goalDrones = nextState->getWorkerCount() - currentState.getWorkerCount();
+			}
+		}
+		else
+		{
+			if((nextState->getWorkerCount() - currentState.getWorkerCount()) > 2)
+			{
+				goalDrones = 2;
+			}
+			else
+			{
+				goalDrones = nextState->getWorkerCount() - currentState.getWorkerCount();
+			}
+		}
+
+		if(goalDrones > 0)
+		{
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Drone, goalDrones));
+		}
 	}
 	if((currentState.getHatcheryCount() < nextState->getHatcheryCount()) && (armyStatus != defend)  && !threatStatus)
 	{
@@ -186,49 +247,52 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 	}
 
 	std::vector<std::pair<MetaType, int>> additionalTech;
-
 	
-	if(!threatStatus)
+	std::set<BWAPI::UpgradeType> requiredUpgrades = nextState->getRequiredUpgrades();
+	std::set<BWAPI::UpgradeType> currentUpgrades = currentState.getRequiredUpgrades();
+	for(std::set<BWAPI::UpgradeType>::iterator i = requiredUpgrades.begin(); i != requiredUpgrades.end(); i++)
 	{
-		std::set<BWAPI::UpgradeType> requiredUpgrades = nextState->getRequiredUpgrades();
-		std::set<BWAPI::UpgradeType> currentUpgrades = currentState.getRequiredUpgrades();
-		for(std::set<BWAPI::UpgradeType>::iterator i = requiredUpgrades.begin(); i != requiredUpgrades.end(); i++)
+		bool found = false;
+		for(std::set<BWAPI::UpgradeType>::iterator j = currentUpgrades.begin(); j != currentUpgrades.end(); j++)
 		{
-			bool found = false;
-			for(std::set<BWAPI::UpgradeType>::iterator j = currentUpgrades.begin(); j != currentUpgrades.end(); j++)
+			if((*i) == (*j))
 			{
-				if((*i) == (*j))
-				{
-					found = true;
-				}
-			}
-			if(!found)
-			{
-				additionalTech.push_back(std::make_pair(MetaType(*i), 1));
+				found = true;
 			}
 		}
-		std::set<BWAPI::UnitType> requiredBuildings = nextState->getRequiredBuildings();
-		std::set<BWAPI::UnitType> currentBuildings = currentState.getRequiredBuildings();
-		for(std::set<BWAPI::UnitType>::iterator i = requiredBuildings.begin(); i != requiredBuildings.end(); i++)
-		{			
-			bool found = false;
-			for(std::set<BWAPI::UnitType>::iterator j = currentBuildings.begin(); j != currentBuildings.end(); j++)
+		if(!found)
+		{
+			additionalTech.push_back(std::make_pair(MetaType(*i), 1));
+		}
+	}
+	std::set<BWAPI::UnitType> requiredBuildings = nextState->getRequiredBuildings();
+	std::set<BWAPI::UnitType> currentBuildings = currentState.getRequiredBuildings();
+	for(std::set<BWAPI::UnitType>::iterator i = requiredBuildings.begin(); i != requiredBuildings.end(); i++)
+	{			
+		bool found = false;
+		for(std::set<BWAPI::UnitType>::iterator j = currentBuildings.begin(); j != currentBuildings.end(); j++)
+		{
+			if((*i) == (*j))
 			{
-				if((*i) == (*j))
-				{
-					found = true;
-				}
+				found = true;
 			}
-			if(!found)
-			{
-				additionalTech.push_back(std::make_pair(MetaType(*i), 1));
-			}
+		}
+		if(!found)
+		{
+			additionalTech.push_back(std::make_pair(MetaType(*i), 1));
 		}
 	}
 	
-	for(std::vector<std::pair<MetaType, int>>::iterator i = additionalTech.begin(); i != additionalTech.end(); i++)
+	if(threatStatus && !additionalTech.empty())
 	{
-		newGoal.push_back(std::make_pair((*i).first, (*i).second));
+		newGoal.push_back(std::make_pair(additionalTech.begin()->first, additionalTech.begin()->second));
+	}
+	else
+	{
+		for(std::vector<std::pair<MetaType, int>>::iterator i = additionalTech.begin(); i != additionalTech.end(); i++)
+		{
+			newGoal.push_back(std::make_pair((*i).first, (*i).second));
+		}
 	}
 	
 	if((currentState.getWorkerCount() >= nextState->getWorkerCount()) &&
@@ -258,21 +322,23 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 	case 1:
 		if(threatStatus)
 		{
-			if((armyStatus != defend) && sunkensToBuild)
+			if(sunkensToBuild)
 			{				
 				newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
 			}
 			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 4));
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hydralisk, 3));
 		}
 		break;
 	case 2:
 		if(threatStatus)
 		{
-			if((armyStatus != defend) && sunkensToBuild)
-			{
-				newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
-			}
+		//	if(sunkensToBuild)
+		//	{
+		//		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
+		//	}
 			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 2));
+			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hydralisk, 4));
 		}
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 2));
 		if(spire)
@@ -289,7 +355,7 @@ std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 	return newGoal;
 }
 
-void StrategyManager::productionStarted(MetaType element)
+const void StrategyManager::productionStarted(MetaType element)
 {
 	if(nextState != NULL)
 	{
@@ -304,25 +370,27 @@ void StrategyManager::productionStarted(MetaType element)
 	}
 }
 
-void StrategyManager::setEnemyComposition(std::set<std::pair<BWAPI::UnitType, int>> composition)
+const void StrategyManager::setEnemyComposition(std::set<std::pair<BWAPI::UnitType, int>> composition)
  {
 	 enemyComposition = composition;
  }
 
-void StrategyManager::addSunken()
+const void StrategyManager::addSunken()
 {
 	sunkenCount++;
 }
-void StrategyManager::removeSunken()
+
+const void StrategyManager::removeSunken()
 {
 	sunkenCount--;
 }
 
-void StrategyManager::update(int techLevel, int armyStatus)
+const void StrategyManager::update(int armyStatus)
 {
 	int hatcheryCount = 0;
 	int workerCount = 0;
 	int gasCount = 0;
+	int techLevel = 1;
 	this->armyStatus = armyStatus;
 	spire = false;
 
@@ -360,7 +428,28 @@ void StrategyManager::update(int techLevel, int armyStatus)
 	currentState.setGasCount(gasCount);
 }
 
-void StrategyManager::setThreatStatus(bool threat)
+void StrategyManager::updateUpgrades(std::vector<BWAPI::UpgradeType> upgrades)
+{
+	std::set<BWAPI::UpgradeType> currentUpgrades = currentState.getRequiredUpgrades();
+
+	for(std::vector<BWAPI::UpgradeType>::iterator i = upgrades.begin(); i != upgrades.end(); i++)
+	{
+		bool found = false;
+		for(std::set<BWAPI::UpgradeType>::iterator j = currentUpgrades.begin(); j != currentUpgrades.end(); j++)
+		{
+			if((*i) == (*j))
+			{
+				found = true;
+			}
+		}
+		if(!found)
+		{
+			currentState.addRequiredUpgrade(*i);
+		}
+	}
+}
+
+const void StrategyManager::setThreatStatus(bool threat)
 {
 	if(threat)
 	{
@@ -372,7 +461,7 @@ void StrategyManager::setThreatStatus(bool threat)
 	}
 }
 
-void StrategyManager::setArmyStatus(int status)
+const void StrategyManager::setArmyStatus(int status)
 {
 
 }
@@ -380,7 +469,7 @@ void StrategyManager::setArmyStatus(int status)
  /*
  prints the current enemy unit composition in terms of percentages of each unit type
  */
-void StrategyManager::drawEnemyInformation(int x, int y)
+const void StrategyManager::drawEnemyInformation(int x, int y)
  {
 	int i = 0;
 
@@ -398,7 +487,7 @@ void StrategyManager::drawEnemyInformation(int x, int y)
 	}
  }
 
-void StrategyManager::drawStateInformation(int x, int y)
+const void StrategyManager::drawStateInformation(int x, int y)
 {
 	BWAPI::Broodwar->drawTextScreen(x, y, "Current State:");
 
@@ -425,7 +514,7 @@ void StrategyManager::drawStateInformation(int x, int y)
 
 }
 
-void StrategyManager::setArmySupply(int supply)
+const void StrategyManager::setArmySupply(int supply)
 {
 	armySupply = supply;
 }
