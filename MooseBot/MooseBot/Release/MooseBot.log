@@ -1,4 +1,4 @@
-﻿Build started 27/02/2015 00:20:50.
+﻿Build started 27/02/2015 16:35:17.
      1>Project "C:\Users\IarfMoose\Documents\GitHub\MooseBotZ\MooseBot\MooseBot\MooseBot.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\CL.exe /c /IC:\Users\IarfMoose\Downloads\BWAPI_3.7.4/include /IC:\Users\IarfMoose\Downloads\boost_1_57_0 /Zi /nologo /W3 /WX- /Ox /Ob2 /Oi /Ot /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _USRDLL /D MOOSEBOT_EXPORTS /D _WINDLL /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Release\\" /Fd"Release\vc90.pdb" /Gd /TP /analyze- /errorReport:prompt MooseBot.cpp
@@ -26,4 +26,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:04.64
+Time Elapsed 00:00:04.52

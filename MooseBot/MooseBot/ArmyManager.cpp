@@ -898,7 +898,6 @@ BWAPI::Position ArmyManager::calculateRegroupPosition()
 {
 	BWAPI::Position position;
 	BWAPI::Unit* closestToEnemy = NULL;
-	BWAPI::Unit* closestToHome = NULL;
 
 	for(std::set<Unit*>::const_iterator i = mainArmy.begin(); i != mainArmy.end(); i++)
 	{
@@ -908,34 +907,24 @@ BWAPI::Position ArmyManager::calculateRegroupPosition()
 			closestToEnemy = (*i);
 		}
 	}
-	/*
-	for(std::set<Unit*>::const_iterator i = mainArmy.begin(); i != mainArmy.end(); i++)
-	{
-		if((closestToHome == NULL) || 
-			((*i)->getDistance(rallyPoint) < closestToHome->getDistance(rallyPoint)))
-		{
-			closestToHome = (*i);
-		}
-	}
-	*/
 	position = closestToEnemy->getPosition();
 
 	BWAPI::Position xModifier(400,0);
 	BWAPI::Position yModifier(0,400);
 
-	if(closestToEnemy->getPosition().x() > rallyPoint.x())
+	if(getClosestEnemy(closestToEnemy->getPosition())->getPosition().x() > rallyPoint.x())
 	{
 		position -= xModifier;
 	}
-	if(closestToEnemy->getPosition().x() < rallyPoint.x())
+	if(getClosestEnemy(closestToEnemy->getPosition())->getPosition().x() < rallyPoint.x())
 	{
 		position += xModifier;
 	}
-	if(closestToEnemy->getPosition().y() > rallyPoint.y())
+	if(getClosestEnemy(closestToEnemy->getPosition())->getPosition().y() > rallyPoint.y())
 	{
 		position -= yModifier;
 	}
-	if(closestToEnemy->getPosition().y() > rallyPoint.y())
+	if(getClosestEnemy(closestToEnemy->getPosition())->getPosition().y() > rallyPoint.y())
 	{
 		position += yModifier;
 	}

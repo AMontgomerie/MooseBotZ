@@ -66,6 +66,20 @@ void MooseBot::onFrame()
 		}
 	}
 
+	if(hatcheryCount < 2)
+	{
+		ProductionManager::Instance().setExpansionStatus(true);
+	}
+	else if((hatcheryCount >= 2) && (hatcheryCount < 3))
+	{
+		ProductionManager::Instance().setExpansionStatus(false);
+	}
+	else
+	{
+		ProductionManager::Instance().setExpansionStatus(true);
+	}
+
+	/*
 	switch(StrategyManager::Instance().getState())
 	{
 	case 0:
@@ -86,6 +100,7 @@ void MooseBot::onFrame()
 		ProductionManager::Instance().setExpansionStatus(true);
 		break;
 	}
+	*/
 
 	ProductionManager::Instance().update(StrategyManager::Instance().getNewGoal());
 	ArmyManager::Instance().update();

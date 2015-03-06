@@ -82,7 +82,7 @@ const void ProductionManager::update(std::vector< std::pair<MetaType, int> > new
 	}
 	else
 	{
-		removeUnwantedItems();
+		//removeUnwantedItems();
 		BuildOrderItem<PRIORITY_TYPE> element = ProductionManager::getNextElement(); //get the next element in the queue	
 		if(Broodwar->getFrameCount() % 30 == 0)
 		{

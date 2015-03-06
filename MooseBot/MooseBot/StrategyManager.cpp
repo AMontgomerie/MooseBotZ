@@ -327,7 +327,7 @@ const std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 				newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
 			}
 			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 4));
-			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hydralisk, 3));
+			//newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hydralisk, 3));
 		}
 		break;
 	case 2:
@@ -338,7 +338,7 @@ const std::vector<std::pair<MetaType, int>> StrategyManager::getNewGoal()
 		//		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Sunken_Colony, 1));
 		//	}
 			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 2));
-			newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hydralisk, 4));
+			//newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Hydralisk, 4));
 		}
 		newGoal.push_back(std::make_pair(BWAPI::UnitTypes::Zerg_Zergling, 2));
 		if(spire)

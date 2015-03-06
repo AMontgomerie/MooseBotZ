@@ -8,13 +8,6 @@ Distributed under GPL v3, see LICENSE for details.
 #include <BWTA.h>
 #include <cstdlib>
 #include <ctime>
-/*
-#include "..\..\SparCraft1\source\GameState.h"
-#include "..\..\SparCraft1\source\Game.h"
-#include "..\..\SparCraft1\source\Unit.h"
-#include "..\..\SparCraft1\source\AllPlayers.h"
-#include "..\..\SparCraft1\source\Player_Kiter_NOKDPS.h"
-*/
 
 #define REGROUPDIST 500	// the pixel distance a unit must be within to count as having arrived at the regroup location
 #define MAXREGROUPTIME 360	//the frame count that we are willing to wait for units to arrive at the regroup location
@@ -36,7 +29,6 @@ class ArmyManager
 	BWAPI::Position defendPosition;
 	BWAPI::Position rallyPoint;
 	BWAPI::Position regroupPosition;
-//	SparCraft::Map map;
 	int armyStatus;
 	int mutaStatus;
 	bool regroupOrdered;
